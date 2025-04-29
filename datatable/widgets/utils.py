@@ -13,6 +13,16 @@
 #              * * * * * * * * * * * * * * * * * * * * *
 
 #
-from .datatable import DataTable
-from .utils import DataTableView, DatatableContainer
-__all__ = ['DataTable', 'DataTableView', 'DatatableContainer']
+from PySide6.QtWidgets import QTableView, QWidget
+
+
+class DatatableContainer(QWidget):
+    """Container for DataTable widgets
+    This class serves as a base class for creating containers that hold
+    DataTable widgets.
+    """
+    pass
+
+
+class DataTableView(QTableView):
+    pass

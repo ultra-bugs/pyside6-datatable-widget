@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~             M""""""""`M            dP
+  ~             Mmmmmm   .M            88
+  ~             MMMMP  .MMM  dP    dP  88  .dP   .d8888b.
+  ~             MMP  .MMMMM  88    88  88888"    88'  `88
+  ~             M' .MMMMMMM  88.  .88  88  `8b.  88.  .88
+  ~             M         M  `88888P'  dP   `YP  `88888P'
+  ~             MMMMMMMMMMM    -*-  Created by Zuko  -*-
+  ~
+  ~             * * * * * * * * * * * * * * * * * * * * *
+  ~             * -    - -   F.R.E.E.M.I.N.D   - -    - *
+  ~             * -  Copyright © 2025 (Z) Programing  - *
+  ~             *    -  -  All Rights Reserved  -  -    *
+  ~             * * * * * * * * * * * * * * * * * * * * *
+  -->
+
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>Employee Management</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QMainWindow, QWidget {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+QTableView {
+    background-color: #1e1e1e;
+    alternate-background-color: #2d2d30;
+    gridline-color: #3f3f46;
+    color: #ffffff;
+    border: 1px solid #3f3f46;
+}
+
+QTableView::item:selected {
+    background-color: #264f78;
+}
+
+QHeaderView::section {
+    background-color: #333333;
+    color: #ffffff;
+    padding: 4px;
+    border: 1px solid #3f3f46;
+}
+
+QComboBox, QLineEdit {
+    background-color: #333333;
+    color: #ffffff;
+    border: 1px solid #3f3f46;
+    padding: 2px;
+}
+
+QPushButton {
+    background-color: #333333;
+    color: #ffffff;
+    border: 1px solid #3f3f46;
+    padding: 4px 8px;
+}
+
+QPushButton:hover {
+    background-color: #3e3e42;
+}
+
+QPushButton:pressed {
+    background-color: #007acc;
+}</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <layout class="QHBoxLayout" name="top_toolbar">
+      <item>
+       <widget class="QPushButton" name="columnVisibilityButton">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="icon">
+         <iconset theme="QIcon::ThemeIcon::FormatJustifyCenter"/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="entriesPerPageComboBox">
+        <property name="minimumSize">
+         <size>
+          <width>50</width>
+          <height>0</height>
+         </size>
+        </property>
+        <item>
+         <property name="text">
+          <string>10</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>25</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>50</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>100</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="entriesLabel">
+        <property name="text">
+         <string>/ page</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="searchLabel">
+        <property name="text">
+         <string>Search:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="searchLineEdit">
+        <property name="minimumSize">
+         <size>
+          <width>200</width>
+          <height>0</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="typeComboBox">
+        <item>
+         <property name="text">
+          <string>All Types</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Number</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>One Line Text</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Text</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>DateTime</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Boolean</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QTableView" name="tableView">
+      <property name="alternatingRowColors">
+       <bool>true</bool>
+      </property>
+      <property name="selectionMode">
+       <enum>QAbstractItemView::SelectionMode::SingleSelection</enum>
+      </property>
+      <property name="selectionBehavior">
+       <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+      </property>
+      <property name="sortingEnabled">
+       <bool>true</bool>
+      </property>
+      <attribute name="horizontalHeaderStretchLastSection">
+       <bool>true</bool>
+      </attribute>
+      <attribute name="verticalHeaderVisible">
+       <bool>false</bool>
+      </attribute>
+     </widget>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="bottom_toolbar">
+      <item>
+       <widget class="QLabel" name="infoLabel">
+        <property name="text">
+         <string>1 - 10 of 57 entries</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="backwardLayout">
+        <property name="spacing">
+         <number>3</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="firstPageButton">
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset theme="QIcon::ThemeIcon::MediaSeekBackward"/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="prevPageButton">
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset theme="QIcon::ThemeIcon::MediaSkipBackward"/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="pagesLayout">
+        <property name="spacing">
+         <number>3</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="page1Button">
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: #007acc;</string>
+          </property>
+          <property name="text">
+           <string>1</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="page2Button">
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>2</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton">
+          <property name="text">
+           <string>...</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="fowardLayout">
+        <property name="spacing">
+         <number>3</number>
+        </property>
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="nextPageButton">
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset theme="QIcon::ThemeIcon::MediaSkipForward"/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="lastPageButton">
+          <property name="maximumSize">
+           <size>
+            <width>30</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="icon">
+           <iconset theme="QIcon::ThemeIcon::MediaSeekForward"/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

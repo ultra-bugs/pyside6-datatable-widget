@@ -12,9 +12,10 @@
 #              *    -  -  All Rights Reserved  -  -    *
 #              * * * * * * * * * * * * * * * * * * * * *
 
+#
 from typing import Any, Optional
 
-from PySide6.QtCore import QModelIndex, Qt, QDateTime
+from PySide6.QtCore import QModelIndex, Qt, QDateTime, QSize
 from PySide6.QtWidgets import (
     QStyledItemDelegate,
     QWidget,

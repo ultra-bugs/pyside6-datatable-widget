@@ -12,6 +12,7 @@
 #              *    -  -  All Rights Reserved  -  -    *
 #              * * * * * * * * * * * * * * * * * * * * *
 
+#
 import inspect
 from functools import wraps
 from types import MethodType
@@ -57,26 +58,27 @@ class Publisher:
             if subscriber in subscribers:
                 subscribers.remove(subscriber)
 
-    def notify(self, event: str, data: Any = None, *args, **kwargs):
+    def notify(self, event: str, *args, **kwargs):
         """Notify subscribers of an event"""
         # Notify global subscribers
         for subscriber in self.global_subscribers:
-            subscriber.update(event, data, *args, **kwargs)
+            subscriber.update(event, *args, **kwargs)
 
         # Notify event-specific subscribers
         if event in self.event_specific_subscribers:
             for subscriber in self.event_specific_subscribers[event]:
-                subscriber.update(event, data, *args, **kwargs)
+                subscriber.update(event, *args, **kwargs)
 
     def connect(self, widget, signal_name: str, event: str, data: Any = None, **kwargs):
         """Connect a Qt signal to an event"""
         slot = getattr(widget, signal_name, None)
         if slot is None:
             return
-
+        if data:
+            kwargs['data'] = data
         slot.connect(
             lambda *args, **signal_kwargs: self.notify(
-                event, data, *args, **{**kwargs, **signal_kwargs}
+                event, *args, **{**kwargs, **signal_kwargs}
             )
         )
 
@@ -93,7 +95,7 @@ class Subscriber:
         for event in events:
             publisher.subscribe(self, event)
 
-    def update(self, event: str, data: Any = None, *args, **kwargs):
+    def update(self, event: str, *args, **kwargs):
         """Handle an event"""
         method_name = f'on_{event}'
         if hasattr(self, method_name):
@@ -116,11 +118,11 @@ class Subscriber:
                     return
                 elif len(params) == 1:
                     # Method takes one parameter
-                    method(data)
+                    method(args[0] if args else None)
                     return
                 else:
                     # Method takes multiple parameters
-                    method(data, *args, **kwargs)
+                    method(*args, **kwargs)
                     return
 
             except (ValueError, TypeError):
@@ -130,8 +132,8 @@ class Subscriber:
                 # Second approach: Try calling with different argument patterns
                 try:
                     # Try with data first
-                    if data is not None:
-                        method(data, *args, **kwargs)
+                    if args[0] is not None:
+                        method(args[0], *[args[1:]], **kwargs)
                     else:
                         method(*args, **kwargs)
                 except TypeError as e:
@@ -143,7 +145,7 @@ class Subscriber:
                         except TypeError:
                             # Try with just data
                             try:
-                                method(data)
+                                method(args[0] if args else None)
                             except TypeError:
                                 # If all attempts fail, raise the original error
                                 raise e

@@ -13,6 +13,7 @@
 #              * * * * * * * * * * * * * * * * * * * * *
 
 #
+#
 import sys
 import datetime
 import random
@@ -21,7 +22,7 @@ from typing import List, Dict, Any
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QLabel
 from PySide6.QtCore import QTimer
 
-from datatable import DataTable, DataType
+from packages.pdw.datatable import DataTable, DataType
 
 
 class ExampleWindow(QMainWindow):
