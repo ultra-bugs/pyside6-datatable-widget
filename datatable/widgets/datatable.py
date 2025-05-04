@@ -13,6 +13,7 @@
 #              * * * * * * * * * * * * * * * * * * * * *
 
 #
+#
 from typing import Any, Dict, List, Optional, Tuple
 
 from PySide6.QtCore import QPoint, Qt, Signal
@@ -20,7 +21,7 @@ from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (QComboBox, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QPushButton,
                                QSpinBox, QStyle, QTableView, QVBoxLayout)
 
-from ..core.base_controller import BaseController
+from ..core.BaseController import BaseController
 from ..models.datatable_model import DataTableModel, DataType, SortOrder
 from ..models.delegates import BooleanDelegate, DateDelegate, NumericDelegate
 from ..ui.untitled import Ui_DataTable

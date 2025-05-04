@@ -12,7 +12,8 @@
 #              *    -  -  All Rights Reserved  -  -    *
 #              * * * * * * * * * * * * * * * * * * * * *
 
-from .observer import Publisher, Subscriber, singleton
-from .widget_manager import WidgetManager
+#
+from .Observer import Publisher, Subscriber, singleton
+from .WidgetManager import WidgetManager
 
 __all__ = ['Publisher', 'Subscriber', 'singleton', 'WidgetManager']

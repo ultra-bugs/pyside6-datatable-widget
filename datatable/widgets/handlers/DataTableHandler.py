@@ -13,13 +13,14 @@
 #              * * * * * * * * * * * * * * * * * * * * *
 
 #
+#
 from typing import Any, Dict
 
 from PySide6.QtCore import Qt, QSortFilterProxyModel
 from PySide6.QtWidgets import QHeaderView, QMenu
 
-from ...core.observer import Subscriber
-from ...core.widget_manager import WidgetManager
+from ...core.Observer import Subscriber
+from ...core.WidgetManager import WidgetManager
 from ...models.datatable_model import DataType, SortOrder
 
 

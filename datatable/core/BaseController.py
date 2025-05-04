@@ -12,14 +12,15 @@
 #              *    -  -  All Rights Reserved  -  -    *
 #              * * * * * * * * * * * * * * * * * * * * *
 
+#
 import importlib
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any
 
 from PySide6.QtWidgets import QWidget
 
-from .observer import Publisher
-from .widget_manager import WidgetManager
+from core.Observer import Publisher
+from core.WidgetManager import WidgetManager
 
 
 class ControllerMeta(type(QWidget), type(ABC)):
