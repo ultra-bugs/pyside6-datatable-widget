@@ -25,7 +25,7 @@ from ...models.datatable_model import DataType, SortOrder
 
 
 class DataTableProxyModel(QSortFilterProxyModel):
-    """Mô hình proxy mở rộng với khả năng lọc nâng cao"""
+    """Extensive proxy model with advanced filtration ability """
     
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -36,29 +36,29 @@ class DataTableProxyModel(QSortFilterProxyModel):
         self._pagination_enabled = False
         
     def setSearchTerm(self, term):
-        """Thiết lập từ khóa tìm kiếm"""
+        """Set Search term"""
         self._search_term = term
         self.invalidateFilter()
         
     def setDataTypeFilter(self, data_type):
-        """Thiết lập bộ lọc loại dữ liệu"""
+        """Set data type filter"""
         self._data_type_filter = data_type
         self.invalidateFilter()
         
     def setPaginationRange(self, start, end):
-        """Thiết lập phạm vi phân trang"""
+        """Set the range of the page"""
         self._pagination_start = start
         self._pagination_end = end
         self._pagination_enabled = True
         self.invalidateFilter()
         
     def disablePagination(self):
-        """Tắt phân trang"""
+        """Turn off Pagination"""
         self._pagination_enabled = False
         self.invalidateFilter()
         
     def filterAcceptsRow(self, source_row, source_parent):
-        """Kiểm tra xem một dòng có nên được hiển thị không"""
+        """Check if a row should be displayed"""
         # Kiểm tra phân trang
         if self._pagination_enabled:
             if source_row < self._pagination_start or source_row >= self._pagination_end:

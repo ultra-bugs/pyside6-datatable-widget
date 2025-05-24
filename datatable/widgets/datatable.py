@@ -42,7 +42,7 @@ class DataTable(Ui_DataTable, BaseController):
     
     # Slot map
     slot_map = {
-        'search_text_changed': ['searchInput', 'textChanged'],
+        'search_text_changed': ['searchLineEdit', 'textChanged'],
         'page_changed': ['pageSpinBox', 'valueChanged'],
         'rows_per_page_changed': ['rowsPerPageCombo', 'currentIndexChanged'],
         'next_page_clicked': ['nextPageButton', 'clicked'],

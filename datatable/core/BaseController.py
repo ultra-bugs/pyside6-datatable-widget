@@ -106,10 +106,9 @@ class BaseController(QWidget, ABC, metaclass=ControllerMeta):
                         event,
                         data={'widget': widget},
                     )
-                    print(f'Connected {signal_info[1]} signal to {event} event')
-                    print(widget, event, signal_info)
                 except (AttributeError, Exception) as e:
                     print(f'Error connecting signal: {e}')
+                    print(event, signal_info)
                     continue
 
                 self.publisher.subscribe(subscriber=subscriber, event=event)
