@@ -30,6 +30,7 @@ setup(
     project_urls={
         'Bug Tracker': 'https://github.com/ultra-bugs/pyside6-datatable-widget/issues',
     },
+    license="GPLv3",
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
@@ -37,6 +38,7 @@ setup(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: User Interfaces',
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     ],
     package_dir={'': '.'},
     packages=find_packages(),
