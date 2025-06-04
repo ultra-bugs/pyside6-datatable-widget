@@ -18,7 +18,7 @@ from .widgets.utils import DataTableView
 from .models.datatable_model import DataTableModel, DataType, SortOrder
 from .models.delegates import CellDelegate, NumericDelegate, DateDelegate, BooleanDelegate
 
-__version__ = '1.0.0'
+__version__ = "1.0.1"
 
 __all__ = [
     'DataTable',
