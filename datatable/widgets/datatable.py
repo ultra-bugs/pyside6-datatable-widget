@@ -59,6 +59,8 @@ class DataTable(Ui_DataTable, BaseController):
         self._model = DataTableModel(self)
         self._proxy_model = DataTableProxyModel(self)
         self._proxy_model.setSourceModel(self._model)
+        self._proxy_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self._proxy_model.setDynamicSortFilter(True)
         
         # Pagination state
         self._page = 1
@@ -91,6 +93,9 @@ class DataTable(Ui_DataTable, BaseController):
         self.rowsPerPageCombo.addItems(['1', '5', '10', '25', '50', '100'])
         self._updatePagination()
         self.pageSpinBox.setVisible(False)
+        
+        # Preferences
+        self._show_integers_without_decimals = True
     
     def setupUi0ld(self, widget):
         """Setup the UI components"""
@@ -207,7 +212,7 @@ class DataTable(Ui_DataTable, BaseController):
         Args:
             data: List of row data dictionaries
         """
-        self._model.setData(data)
+        self._model.setModelData(data)
     
     def setColumns(self, columns: List[Tuple[str, str, DataType]]) -> None:
         """Set the table columns
@@ -326,6 +331,56 @@ class DataTable(Ui_DataTable, BaseController):
         """
         return self._model.aggregate(column_key, agg_type)
     
+    def insertRow(self, row_index: int, row_data: Dict[str, Any]) -> bool:
+        """Insert a new row at the specified index
+        
+        Args:
+            row_index: Index where to insert the row (0-based)
+            row_data: Dictionary containing the row data
+            
+        Returns:
+            Success status
+        """
+        success = self._model._insertRow(row_index, row_data)
+        if success:
+            self._updatePagination()
+        return success
+    
+    def appendRow(self, row_data: Dict[str, Any]) -> bool:
+        """Append a row at the end of the table
+        
+        Args:
+            row_data: Dictionary containing the row data
+            
+        Returns:
+            Success status
+        """
+        success = self._model.appendRow(row_data)
+        if success:
+            self._updatePagination()
+        return success
+    
+    def setIntegerDisplay(self, show_without_decimals: bool) -> None:
+        """Set whether to display integers without decimal places
+        
+        Args:
+            show_without_decimals: If True, integers will be displayed without decimal places
+        """
+        self._show_integers_without_decimals = show_without_decimals
+        
+        # Update numeric formatting functions
+        for col_key, data_type in self._model._column_types.items():
+            if data_type == DataType.NUMERIC:
+                if show_without_decimals:
+                    self._model.setFormattingFunction(
+                        col_key, lambda n: str(int(n)) if isinstance(n, (int, float)) and float(n).is_integer() 
+                                else (f'{n:,.2f}' if isinstance(n, (int, float)) else str(n))
+                    )
+                else:
+                    self._model.setFormattingFunction(
+                        col_key, lambda n: f'{n:,.2f}' if isinstance(n, (int, float)) else str(n)
+                    )
+    
     # Private methods
     def _onModelReset(self) -> None:
         """Handle model reset"""
@@ -354,6 +409,8 @@ class DataTable(Ui_DataTable, BaseController):
             
             if data_type == DataType.NUMERIC:
                 delegate = NumericDelegate(self.tableView)
+                if self._show_integers_without_decimals:
+                    pass
                 self.tableView.setItemDelegateForColumn(i, delegate)
             elif data_type == DataType.DATE:
                 delegate = DateDelegate(self.tableView)

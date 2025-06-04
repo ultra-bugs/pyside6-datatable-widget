@@ -85,7 +85,11 @@ class NumericDelegate(CellDelegate):
         """Format the display text"""
         try:
             num_value = float(value) if value is not None else 0.0
-            formatted = f'{self.prefix}{num_value:.{self.decimals}f}{self.suffix}'
+            # Kiểm tra số nguyên và loại bỏ phần thập phân nếu là số nguyên
+            if num_value.is_integer():
+                formatted = f'{self.prefix}{int(num_value)}{self.suffix}'
+            else:
+                formatted = f'{self.prefix}{num_value:.{self.decimals}f}{self.suffix}'
             return formatted
         except (ValueError, TypeError):
             return super().displayText(value, locale)

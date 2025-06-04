@@ -100,8 +100,8 @@ data_table.enableRowCollapsing(True, "subrows")
 # Example data with subrows
 data = [
     {
-        "id": 1, 
-        "name": "Category A", 
+        "id": 1,
+        "name": "Category A",
         "total": 1000,
         "subrows": [
             {"id": 101, "name": "Item A1", "total": 500},
@@ -109,8 +109,8 @@ data = [
         ]
     },
     {
-        "id": 2, 
-        "name": "Category B", 
+        "id": 2,
+        "name": "Category B",
         "total": 2000,
         "subrows": [
             {"id": 201, "name": "Item B1", "total": 1200},
