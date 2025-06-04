@@ -1,24 +1,56 @@
-# This workflow will upload a Python Package to PyPI when a release is created
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python#publishing-to-package-registries
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-name: Upload Python Package
+name: Upload Python Package & Sync Version
 
 on:
   release:
-    types: [published]
+    types: [published, edited]
 
 permissions:
-  contents: read
+  contents: write # needed for pushing version bump commit
+  id-token: write # needed for trusted publishing to PyPI
 
 jobs:
-  release-build:
+  sync-version:
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # needed to push tags and commits
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Extract version from tag
+        id: extract_version
+        run: |
+          TAG_NAME="${GITHUB_REF##*/}"
+          # Remove 'v' prefix if you use tags like v1.2.3
+          VERSION="${TAG_NAME#v}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Update version in setup.py
+        run: |
+          sed -i -E "s/version=[\"'][0-9a-zA-Z\.\-]+[\"']/version=\"${VERSION}\"/" setup.py
+
+      - name: Update version in datatable/__init__.py
+        run: |
+          sed -i -E "s/__version__ *= *[\"'][0-9a-zA-Z\.\-]+[\"']/__version__ = \"${VERSION}\"/" datatable/__init__.py
+
+      - name: Commit and push version update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add setup.py datatable/__init__.py
+          git commit -m "chore: bump version to $VERSION [GitHub Actions]"
+          git push
+
+  build-and-publish:
+    runs-on: ubuntu-latest
+    needs: sync-version
+    environment:
+      name: pypi
+      url: https://pypi.org/project/pyside6-datatable-widget/${{ github.event.release.tag_name }}
     steps:
       - uses: actions/checkout@v4
 
@@ -28,41 +60,8 @@ jobs:
 
       - name: Build release distributions
         run: |
-          # NOTE: put your own distribution build steps here.
           python -m pip install build
           python -m build
-
-      - name: Upload distributions
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-dists
-          path: dist/
-
-  pypi-publish:
-    runs-on: ubuntu-latest
-    needs:
-      - release-build
-    permissions:
-      # IMPORTANT: this permission is mandatory for trusted publishing
-      id-token: write
-
-    # Dedicated environments with protections for publishing are strongly recommended.
-    # For more information, see: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#deployment-protection-rules
-    environment:
-      name: pypi
-      # OPTIONAL: uncomment and update to include your PyPI project URL in the deployment status:
-      # url: https://pypi.org/p/YOURPROJECT
-      #
-      # ALTERNATIVE: if your GitHub Release name is the PyPI project version string
-      # ALTERNATIVE: exactly, uncomment the following line instead:
-      # url: https://pypi.org/project/YOURPROJECT/${{ github.event.release.name }}
-      url: https://pypi.org/project/pyside6-datatable-widget/${{ github.event.release.name }}
-    steps:
-      - name: Retrieve release distributions
-        uses: actions/download-artifact@v4
-        with:
-          name: release-dists
-          path: dist/
 
       - name: Publish release distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
