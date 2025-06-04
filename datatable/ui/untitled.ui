@@ -1,20 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~             M""""""""`M            dP
-  ~             Mmmmmm   .M            88
-  ~             MMMMP  .MMM  dP    dP  88  .dP   .d8888b.
-  ~             MMP  .MMMMM  88    88  88888"    88'  `88
-  ~             M' .MMMMMMM  88.  .88  88  `8b.  88.  .88
-  ~             M         M  `88888P'  dP   `YP  `88888P'
-  ~             MMMMMMMMMMM    -*-  Created by Zuko  -*-
-  ~
-  ~             * * * * * * * * * * * * * * * * * * * * *
-  ~             * -    - -   F.R.E.E.M.I.N.D   - -    - *
-  ~             * -  Copyright © 2025 (Z) Programing  - *
-  ~             *    -  -  All Rights Reserved  -  -    *
-  ~             * * * * * * * * * * * * * * * * * * * * *
-  -->
-
 <ui version="4.0">
  <class>DataTable</class>
  <widget class="QWidget" name="DataTable">
@@ -36,65 +20,7 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QWidget {
-    background-color: #1e1e1e;
-    color: #ffffff;
-}
-
-QTableView {
-    background-color: #1e1e1e;
-    alternate-background-color: #2d2d30;
-    gridline-color: #3f3f46;
-    color: #ffffff;
-    border: 1px solid #3f3f46;
-}
-
-QTableView::item:selected {
-    background-color: #264f78;
-}
-
-QHeaderView::section {
-    background-color: #333333;
-    color: #ffffff;
-    padding: 4px;
-    border: 1px solid #3f3f46;
-}
-
-QComboBox, QLineEdit, QSpinBox {
-    background-color: #333333;
-    color: #ffffff;
-    border: 1px solid #3f3f46;
-    padding: 2px;
-}
-
-QPushButton {
-    background-color: #333333;
-    color: #ffffff;
-    border: 1px solid #3f3f46;
-    padding: 4px 8px;
-}
-
-QPushButton:hover {
-    background-color: #3e3e42;
-}
-
-QPushButton:pressed {
-    background-color: #007acc;
-}
-/* Đảm bảo các container widgets có background đúng */
-QWidget#backwardLayout, QWidget#pagesLayout, QWidget#fowardLayout {
-    background-color: transparent;
-}
-
-/* Fixes cho DataTableView và container của nó */
-DataTableView, DatatableContainer {
-    background-color: #1e1e1e;
-    color: #ffffff;
-}
-
-WidgetSwitcher {
-    background-color: transparent;
-}</string>
+   <string notr="true"/>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -311,8 +237,26 @@ WidgetSwitcher {
      </item>
      <item>
       <widget class="QSpinBox" name="pageSpinBox">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="frame">
         <bool>false</bool>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>99999999</number>
        </property>
       </widget>
      </item>
@@ -363,22 +307,22 @@ WidgetSwitcher {
           </property>
          </widget>
         </item>
-         <item>
-          <widget class="QPushButton" name="pushButton">
-           <property name="geometry">
-            <rect>
-             <x>80</x>
-             <y>60</y>
-             <width>27</width>
-             <height>27</height>
-            </rect>
-           </property>
-           <property name="text">
-            <string>...</string>
-           </property>
-          </widget>
-         </item>
+        <item>
+         <widget class="QPushButton" name="pushButton">
+          <property name="styleSheet">
+           <string notr="true">QPushButton:hover {
+    background-color: #3e3e42;
+}
 
+QPushButton:pressed {
+    background-color: #007acc;
+}</string>
+          </property>
+          <property name="text">
+           <string>...</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
      </item>
@@ -443,11 +387,6 @@ WidgetSwitcher {
   <customwidget>
    <class>DataTableView</class>
    <extends>QTableView</extends>
-   <header>..widgets.utils.h</header>
-  </customwidget>
-  <customwidget>
-   <class>DatatableContainer</class>
-   <extends>QWidget</extends>
    <header>..widgets.utils.h</header>
   </customwidget>
  </customwidgets>

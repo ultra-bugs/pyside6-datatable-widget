@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QHBox
     QSizePolicy, QSpacerItem, QSpinBox, QVBoxLayout,
     QWidget)
 
-from ..widgets.utils import (DataTableView, DatatableContainer)
+from ..widgets.utils import DataTableView
 
 class Ui_DataTable(object):
     def setupUi(self, DataTable):
@@ -28,66 +28,7 @@ class Ui_DataTable(object):
             DataTable.setObjectName(u"DataTable")
         DataTable.resize(830, 545)
         DataTable.setMinimumSize(QSize(640, 480))
-        DataTable.setStyleSheet(u"QWidget {\n"
-"    background-color: #1e1e1e;\n"
-"    color: #ffffff;\n"
-"}\n"
-"\n"
-"QTableView {\n"
-"    background-color: #1e1e1e;\n"
-"    alternate-background-color: #2d2d30;\n"
-"    gridline-color: #3f3f46;\n"
-"    color: #ffffff;\n"
-"    border: 1px solid #3f3f46;\n"
-"}\n"
-"\n"
-"QTableView::item:selected {\n"
-"    background-color: #264f78;\n"
-"}\n"
-"\n"
-"QHeaderView::section {\n"
-"    background-color: #333333;\n"
-"    color: #ffffff;\n"
-"    padding: 4px;\n"
-"    border: 1px solid #3f3f46;\n"
-"}\n"
-"\n"
-"QComboBox, QLineEdit, QSpinBox {\n"
-"    background-color: #333333;\n"
-"    color: #ffffff;\n"
-"    border: 1px solid #3f3f46;\n"
-"    padding: 2px;\n"
-"}\n"
-"\n"
-"QPushButton {\n"
-"    background-color: #333333;\n"
-"    color: #ffffff;\n"
-"    border: 1px solid #3f3f46;\n"
-"    padding: 4px 8px;\n"
-"}\n"
-"\n"
-"QPushButton:hover {\n"
-"    background-color: #3e3e42;\n"
-"}\n"
-"\n"
-"QPushButton:pressed {\n"
-"    background-color: #007acc;\n"
-"}\n"
-"/* \u0110\u1ea3m b\u1ea3o c\u00e1c container widgets c\u00f3"
-                        " background \u0111\u00fang */\n"
-"QWidget#backwardLayout, QWidget#pagesLayout, QWidget#fowardLayout {\n"
-"    background-color: transparent;\n"
-"}\n"
-"\n"
-"/* Fixes cho DataTableView v\u00e0 container c\u1ee7a n\u00f3 */\n"
-"DataTableView, DatatableContainer {\n"
-"    background-color: #1e1e1e;\n"
-"    color: #ffffff;\n"
-"}\n"
-"\n"
-"WidgetSwitcher {\n"
-"    background-color: transparent;\n"
-"}")
+        DataTable.setStyleSheet(u"")
         self.verticalLayout = QVBoxLayout(DataTable)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.top_toolbar = QHBoxLayout()
@@ -192,7 +133,15 @@ class Ui_DataTable(object):
 
         self.pageSpinBox = QSpinBox(DataTable)
         self.pageSpinBox.setObjectName(u"pageSpinBox")
+        sizePolicy = QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.pageSpinBox.sizePolicy().hasHeightForWidth())
+        self.pageSpinBox.setSizePolicy(sizePolicy)
+        self.pageSpinBox.setMaximumSize(QSize(0, 0))
         self.pageSpinBox.setFrame(False)
+        self.pageSpinBox.setMinimum(1)
+        self.pageSpinBox.setMaximum(99999999)
 
         self.bottom_toolbar.addWidget(self.pageSpinBox)
 
@@ -217,7 +166,13 @@ class Ui_DataTable(object):
 
         self.pushButton = QPushButton(self.pagesLayout)
         self.pushButton.setObjectName(u"pushButton")
-        self.pushButton.setGeometry(QRect(80, 60, 27, 27))
+        self.pushButton.setStyleSheet(u"QPushButton:hover {\n"
+"    background-color: #3e3e42;\n"
+"}\n"
+"\n"
+"QPushButton:pressed {\n"
+"    background-color: #007acc;\n"
+"}")
 
         self._pagesLayout.addWidget(self.pushButton)
 

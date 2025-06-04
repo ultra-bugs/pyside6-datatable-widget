@@ -1,0 +1,67 @@
+/*
+ *             M""""""""`M            dP                     
+ *             Mmmmmm   .M            88                     
+ *             MMMMP  .MMM  dP    dP  88  .dP   .d8888b.     
+ *             MMP  .MMMMM  88    88  88888"    88'  `88     
+ *             M' .MMMMMMM  88.  .88  88  `8b.  88.  .88     
+ *             M         M  `88888P'  dP   `YP  `88888P'     
+ *             MMMMMMMMMMM    -*-  Created by Zuko  -*-      
+ *
+ *             * * * * * * * * * * * * * * * * * * * * *     
+ *             * -    - -   F.R.E.E.M.I.N.D   - -    - *
+ *             * -  Copyright © 2025 (Z) Programing  - *     
+ *             *    -  -  All Rights Reserved  -  -    *     
+ *             * * * * * * * * * * * * * * * * * * * * *
+ */
+
+/* Dark DataTable */
+QWidget {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+QTableView {
+    background-color: #1e1e1e;
+    alternate-background-color: #2d2d30;
+    gridline-color: #3f3f46;
+    color: #ffffff;
+    border: 1px solid #3f3f46;
+}
+
+QTableView::item:selected {
+    background-color: #264f78;
+}
+
+QHeaderView::section {
+    background-color: #333333;
+    color: #ffffff;
+    padding: 4px;
+    border: 1px solid #3f3f46;
+}
+
+QComboBox, QLineEdit, QSpinBox {
+    background-color: #333333;
+    color: #ffffff;
+    border: 1px solid #3f3f46;
+    padding: 2px;
+}
+
+QPushButton {
+    background-color: #333333;
+    color: #ffffff;
+    border: 1px solid #3f3f46;
+    padding: 4px 8px;
+}
+
+QWidget#backwardLayout, QWidget#pagesLayout, QWidget#fowardLayout {
+    background-color: transparent;
+}
+
+DataTableView, DatatableContainer {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+WidgetSwitcher {
+    background-color: transparent;
+}

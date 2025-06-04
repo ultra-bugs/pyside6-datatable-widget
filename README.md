@@ -5,13 +5,13 @@ A powerful DataTable widget for PySide6 applications with functionality similar 
 ## Features
 
 - **Customizable Table**: Easily configure columns, types, and formatting
-- **Data Type Detection**: Automatically detect and handle different data types
+- **Data Type Detection**: Automatically detect and handle different data types [NOT-IMPLEMENTED-YET]
 - **Type-based Sorting**: Different column types sort appropriately
 - **Search Functionality**: Global and column-specific search
 - **Row Collapsing**: Support for expandable/collapsible rows
-- **Pagination**: Built-in pagination with configurable page sizes
+- **Pagination**: Built-in pagination with configurable page sizes [SEMI-IMPLEMENTED]
 - **Column Visibility**: Show/hide columns easily
-- **Aggregation Functions**: Calculate sums, averages, percentages, etc.
+- **Aggregation Functions**: Calculate sums, averages, percentages, etc. [SEMI-IMPLEMENTED]
 - **Custom Formatting**: Format data display for different column types
 - **Observer Pattern**: Event-driven architecture for clear code organization
 
@@ -164,6 +164,8 @@ Main widget class that provides the UI and functionality.
 #### Methods
 
 - `setData(data)`: Set table data
+- `appendRow(row_data)`: Append a row to the table
+- `insertRow(row_index, row_data)`: Insert a row at a specific index
 - `setColumns(columns)`: Set table columns
 - `setVisibleColumns(columns)`: Set which columns are visible
 - `enableRowCollapsing(enabled, child_row_key)`: Enable/disable row collapsing
@@ -203,6 +205,27 @@ Model class that manages data and operations.
 - `searchColumn(column_key, term)`: Search specific column
 - `aggregate(column_key, agg_type)`: Aggregate column values
 - `calculateRowPercentage(row_index, column_key)`: Calculate row percentage
+
+#### Signals
+
+- `rowExpandedCollapsed(int, bool)`  : row, is_expanded. Emitted when a row, sub-rows expanded or collapsed
+> Note: The model is child class of `QAbstractTableModel`. So these signals below are inherited (from `QAbstractItemModel`).
+
+- `dataChanged(topLeft, bottomRight, roles)`: Emitted when data in the specified range has been modified.
+- `headerDataChanged(orientation, first, last)`: Emitted when header data for a section changes.
+- `layoutChanged()`: Emitted when layout of the model changes drastically.
+- `layoutAboutToBeChanged()`: Emitted before a major layout change.
+- `modelReset()`: Emitted after the model is reset.
+- `rowsAboutToBeInserted(parent, start, end)`: Emitted before rows are inserted.
+- `rowsInserted(parent, start, end)`: Emitted after rows are inserted.
+- `rowsAboutToBeRemoved(parent, start, end)`: Emitted before rows are removed.
+- `rowsRemoved(parent, start, end)`: Emitted after rows are removed.
+- `columnsAboutToBeInserted(parent, start, end)`: Emitted before columns are inserted.
+- `columnsInserted(parent, start, end)`: Emitted after columns are inserted.
+- `columnsAboutToBeRemoved(parent, start, end)`: Emitted before columns are removed.
+- `columnsRemoved(parent, start, end)`: Emitted after columns are removed.
+- `rowsMoved(parent, start, end, destination, row)`: Emitted after rows are moved.
+- `columnsMoved(parent, start, end, destination, column)`: Emitted after columns are moved.
 
 ## License
 
