@@ -13,6 +13,7 @@
 #              * * * * * * * * * * * * * * * * * * * * *
 
 #
+#
 from setuptools import setup, find_packages
 
 with open('README.md', 'r', encoding='utf-8') as fh:
@@ -42,6 +43,7 @@ setup(
     ],
     package_dir={'': '.'},
     packages=find_packages(),
+    include_package_data=True,
     python_requires='>=3.10',
     install_requires=[
         'PySide6>=6.1.0',

@@ -1,0 +1,25 @@
+include LICENSE
+include README.md
+include setup.py
+include setup.cfg
+
+# Include all Python files
+recursive-include datatable *.py
+
+# Include UI files
+recursive-include datatable/ui *.py *.ui
+
+# Include theme files
+recursive-include datatable/themes *
+
+# Include any other resource files
+recursive-include datatable/widgets *
+recursive-include datatable/models *
+recursive-include datatable/core *
+
+# Exclude unnecessary files
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *.so
+global-exclude .git*
+global-exclude .DS_Store 
