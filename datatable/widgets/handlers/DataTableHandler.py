@@ -14,9 +14,10 @@
 
 #
 #
+#
 from typing import Any, Dict
 
-from PySide6.QtCore import Qt, QSortFilterProxyModel
+from PySide6.QtCore import QModelIndex, Qt, QSortFilterProxyModel
 from PySide6.QtWidgets import QHeaderView, QMenu
 
 from ...core.Observer import Subscriber
@@ -290,13 +291,16 @@ class DataTableHandler(Subscriber):
             SortOrder.ASCENDING if sort_order == 0 else SortOrder.DESCENDING
         )
         
-    def on_table_row_clicked(self, index, data: Dict[str, Any] = None):
+    def on_table_row_clicked(self, index: QModelIndex, data: Dict[str, Any] = None):
         """Handle table row clicked
         
         Args:
             index: Model index
             data: Event data
         """
+        import inspect
+        print("on_table_row_clicked", inspect.getframeinfo(inspect.currentframe()))
+        breakpoint()
         if not index.isValid():
             return
             
