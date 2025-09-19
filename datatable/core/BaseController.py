@@ -19,8 +19,8 @@ from typing import Dict, List, Any
 
 from PySide6.QtWidgets import QWidget
 
-from core.Observer import Publisher
-from core.WidgetManager import WidgetManager
+from .Observer import Publisher
+from .WidgetManager import WidgetManager
 
 
 class ControllerMeta(type(QWidget), type(ABC)):
