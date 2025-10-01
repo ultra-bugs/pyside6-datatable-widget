@@ -257,7 +257,7 @@ class DataTable(Ui_DataTable, BaseController):
 
         Args:
             column_key: Column key to sort by
-            order: Sort order
+            order: Sort order, enum, example: SortOrder.ASCENDING, SortOrder.DESCENDING. Dont forget to import: from datatable import SortOrder
         """
         if column_key not in self._model._visible_columns:
             return
