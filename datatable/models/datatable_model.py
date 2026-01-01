@@ -39,9 +39,6 @@ class SortOrder(Enum):
 
 class DataTableModel(QAbstractTableModel):
     """Model for the DataTable widget"""
-
-    dataChanged = Signal()
-    modelReset = Signal()
     rowExpandedCollapsed = Signal(int, bool)  # row, is_expanded
 
     def __init__(self, parent: Optional[QObject] = None):
@@ -95,8 +92,11 @@ class DataTableModel(QAbstractTableModel):
         if role in (Qt.DisplayRole, Qt.EditRole):
             value = self._data[row].get(col_key)
 
-            if role == Qt.DisplayRole and col_key in self._formatting_funcs:
-                return self._formatting_funcs[col_key](value)
+            # Luôn áp dụng formatter nếu có, cho bất kỳ role nào
+            if col_key in self._formatting_funcs:
+                # Chỉ áp dụng formatter cho DisplayRole để giữ nguyên giá trị gốc cho EditRole
+                if role == Qt.DisplayRole:
+                    return self._formatting_funcs[col_key](value)
             return value
 
         return None
@@ -121,7 +121,7 @@ class DataTableModel(QAbstractTableModel):
                 return False
 
             self._data[row][col_key] = value
-            self.dataChanged.emit(index, index, [role])
+            self.dataChanged.emit(index, index, [role]) # TopLeft, BottomRight, Roles args
             return True
 
         return False
@@ -147,7 +147,7 @@ class DataTableModel(QAbstractTableModel):
         return flags
 
     # Data Setup Methods
-    def setData(self, data: List[Dict[str, Any]]) -> None:
+    def setModelData(self, data: List[Dict[str, Any]]) -> None:
         """Set the data for the model
 
         Args:
@@ -182,7 +182,9 @@ class DataTableModel(QAbstractTableModel):
             if data_type == DataType.DATE:
                 self.setFormattingFunction(key, lambda d: d.strftime('%Y-%m-%d') if isinstance(d, datetime.date) else str(d))
             elif data_type == DataType.NUMERIC:
-                self.setFormattingFunction(key, lambda n: f'{n:,.2f}' if isinstance(n, (int, float)) else str(n))
+                self.setFormattingFunction(
+                    key, lambda n: str(int(n)) if isinstance(n, (int, float)) and float(n).is_integer() else (f'{n:,.2f}' if isinstance(n, (int, float)) else str(n))
+                )
             elif data_type == DataType.BOOLEAN:
                 self.setFormattingFunction(key, lambda b: 'Yes' if b else 'No')
 
@@ -204,6 +206,12 @@ class DataTableModel(QAbstractTableModel):
         """
         if column_key in self._column_keys:
             self._formatting_funcs[column_key] = func
+            # Force refresh display of this column
+            if column_key in self._visible_columns:
+                col_index = self._visible_columns.index(column_key)
+                topLeft = self.index(0, col_index)
+                bottomRight = self.index(len(self._data) - 1 if self._data else 0, col_index)
+                self.dataChanged.emit(topLeft, bottomRight, [Qt.DisplayRole])
 
     def setEditableColumns(self, editable_columns: Dict[str, bool]) -> None:
         """Set which columns are editable
@@ -511,7 +519,7 @@ class DataTableModel(QAbstractTableModel):
         return None
 
     def calculateRowPercentage(self, row_index: int, column_key: str) -> float:
-        """Calculate percentage of value in row relative to column total
+        """Calculate percentage of a row value against column total
 
         Args:
             row_index: Row index
@@ -520,15 +528,55 @@ class DataTableModel(QAbstractTableModel):
         Returns:
             Percentage value
         """
-        if column_key not in self._column_keys or row_index >= len(self._data):
-            return 0.0
-
-        total = self.aggregate(column_key, 'sum')
-        if total is None or total == 0:
+        if row_index < 0 or row_index >= len(self._data):
             return 0.0
 
         value = self._data[row_index].get(column_key, 0)
         if not isinstance(value, (int, float)):
             return 0.0
 
+        total = self.aggregate(column_key, 'sum')
+        if total == 0:
+            return 0.0
+
         return (value / total) * 100.0
+
+    def _insertRow(self, row_index: int, row_data: Dict[str, Any]) -> bool:
+        """Insert a new row at the specified index
+        
+        Args:
+            row_index: Index where to insert the row (0-based)
+            row_data: Dictionary containing the row data
+            
+        Returns:
+            Success status
+        """
+        # Validate row index
+        if row_index < 0 or row_index > len(self._data):
+            return False
+            
+        # Insert the row at the specified index
+        self.beginInsertRows(QModelIndex(), row_index, row_index)
+        self._data.insert(row_index, row_data)
+        self.endInsertRows()
+        
+        # Emit signals with proper parameters
+        # Create model indexes for the entire row that was inserted
+        if len(self._visible_columns) > 0:
+            topLeft = self.index(row_index, 0)
+            bottomRight = self.index(row_index, len(self._visible_columns) - 1)
+            self.dataChanged.emit(topLeft, bottomRight, [Qt.DisplayRole])
+        
+        return True
+        
+    def appendRow(self, row_data: Dict[str, Any]) -> bool:
+        """Append a row at the end of the table
+        
+        Args:
+            row_data: Dictionary containing the row data
+            
+        Returns:
+            Success status
+        """
+        # Just use insertRow with the length of data as index
+        return self._insertRow(len(self._data), row_data)

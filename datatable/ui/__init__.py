@@ -12,12 +12,5 @@
 #              *    -  -  All Rights Reserved  -  -    *
 #              * * * * * * * * * * * * * * * * * * * * *
 
-#
-from .widgets.datatable import DataTable
-from .widgets.utils import DataTableView
-from .models.datatable_model import DataTableModel, DataType, SortOrder
-from .models.delegates import CellDelegate, NumericDelegate, DateDelegate, BooleanDelegate
-
-__version__ = "1.1.0.6"
-
-__all__ = ['DataTable', 'DataTableModel', 'DataType', 'SortOrder', 'CellDelegate', 'NumericDelegate', 'DateDelegate', 'BooleanDelegate', 'DataTableView']
+# This file ensures that the ui directory is recognized as a Python package
+# and included in the distribution when publishing to PyPI.

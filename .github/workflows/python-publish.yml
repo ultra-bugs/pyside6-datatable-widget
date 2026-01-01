@@ -10,10 +10,12 @@ name: Upload Python Package
 
 on:
   release:
-    types: [published]
+    types: [published, edited]
 
 permissions:
-  contents: read
+  contents: write # needed for pushing version bump commit
+  id-token: write # needed for trusted publishing to PyPI
+
 
 jobs:
   release-build:
@@ -21,16 +23,44 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 0  # needed to push tags and commits
       - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
+      - name: Extract version from tag
+        id: extract_version
+        run: |
+          TAG_NAME="${GITHUB_REF##*/}"
+          # Remove 'v' prefix if you use tags like v1.2.3
+          VERSION="${TAG_NAME#v}"
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Update version in setup.py
+        run: |
+          sed -i -E "s/version=[\"'][0-9a-zA-Z\.\-]+[\"']/version=\"${VERSION}\"/" setup.py
+
+      - name: Update version in datatable/__init__.py
+        run: |
+          sed -i -E "s/__version__ *= *[\"'][0-9a-zA-Z\.\-]+[\"']/__version__ = \"${VERSION}\"/" datatable/__init__.py
+
+      - name: Remove all breakpoint() calls
+        run: |
+          find . -type f -name '*.py' -exec sed -i '/breakpoint()/d' {} +
 
       - name: Build release distributions
         run: |
           # NOTE: put your own distribution build steps here.
           python -m pip install build
           python -m build
+
+      - name: Commit and push version update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add setup.py datatable/__init__.py
+          git commit -m "chore: bump version to $VERSION [GitHub Actions]"
+          git push origin HEAD:main
 
       - name: Upload distributions
         uses: actions/upload-artifact@v4

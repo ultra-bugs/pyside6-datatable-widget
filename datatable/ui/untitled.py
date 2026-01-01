@@ -217,6 +217,8 @@ class Ui_DataTable(object):
         self.pageSpinBox = QSpinBox(DataTable)
         self.pageSpinBox.setObjectName('pageSpinBox')
         self.pageSpinBox.setFrame(False)
+        self.pageSpinBox.setMinimum(1)
+        self.pageSpinBox.setMaximum(99999999)
 
         self.bottom_toolbar.addWidget(self.pageSpinBox)
 
@@ -240,7 +242,14 @@ class Ui_DataTable(object):
         self._pagesLayout.addWidget(self.page2Button)
 
         self.pushButton = QPushButton(self.pagesLayout)
-        self.pushButton.setObjectName('pushButton')
+        self.pushButton.setObjectName(u"pushButton")
+        self.pushButton.setStyleSheet(u"QPushButton:hover {\n"
+"    background-color: #3e3e42;\n"
+"}\n"
+"\n"
+"QPushButton:pressed {\n"
+"    background-color: #007acc;\n"
+"}")
 
         self._pagesLayout.addWidget(self.pushButton)
 
