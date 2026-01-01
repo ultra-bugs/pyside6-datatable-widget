@@ -12,16 +12,17 @@
 #              *    -  -  All Rights Reserved  -  -    *
 #              * * * * * * * * * * * * * * * * * * * * *
 
-#
+
 import sys
+from pathlib import Path
+root = Path(__file__).resolve().parent.parent
+sys.path.append(str(root))
 import datetime
 import random
+import sys
 from typing import List, Dict, Any
-
 from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QLabel
-from PySide6.QtCore import QTimer
-
-from packages.pdw.datatable import DataTable, DataType
+from datatable import DataTable, DataType
 
 
 class ExampleWindow(QMainWindow):
@@ -31,6 +32,8 @@ class ExampleWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle('DataTable Example')
         self.resize(800, 600)
+        # set style fusion
+        self.setStyleFusion()
 
         # Central widget and layout
         central_widget = QWidget()
@@ -169,6 +172,11 @@ class ExampleWindow(QMainWindow):
         """
         order_str = 'ascending' if sort_order.value == 0 else 'descending'
         print(f'Table sorted by {column_key} in {order_str} order')
+
+    def setStyleFusion(self):
+        """Set the application style to Fusion and apply a dark theme."""
+        from PySide6.QtWidgets import QStyleFactory
+        QApplication.setStyle(QStyleFactory.create('Fusion'))
 
 
 if __name__ == '__main__':

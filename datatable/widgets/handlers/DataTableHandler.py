@@ -131,7 +131,7 @@ class DataTableHandler(Subscriber):
 
     def _apply_combined_filters(self):
         """Apply both text search and type filters together (AND condition)"""
-        search_term = self.widget_manager.get('searchLineEdit').text()
+        search_term = self.widget_manager.get('searchInput').text()
         type_index = self.widget_manager.get('typeComboBox').currentIndex()
 
         # Convert type index to DataType
