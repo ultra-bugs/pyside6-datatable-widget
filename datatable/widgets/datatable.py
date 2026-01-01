@@ -47,7 +47,7 @@ class DataTable(Ui_DataTable, BaseController):
         'prev_page_clicked': ['prevPageButton', 'clicked'],
         'first_page_clicked': ['firstPageButton', 'clicked'],
         'last_page_clicked': ['lastPageButton', 'clicked'],
-        'table_header_clicked': ['tableView', 'sectionClicked'],
+        'table_header_clicked': ['tableView.verticalHeader', 'sectionClicked'],
         'table_row_clicked': ['tableView', 'clicked'],
         'column_visibility_changed': ['columnVisibilityButton', 'clicked'],
     }

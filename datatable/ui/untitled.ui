@@ -93,7 +93,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="searchLineEdit">
+      <widget class="QLineEdit" name="searchInput">
        <property name="minimumSize">
         <size>
          <width>200</width>

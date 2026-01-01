@@ -11,7 +11,7 @@
 #              * -  Copyright © 2025 (Z) Programing  - *
 #              *    -  -  All Rights Reserved  -  -    *
 #              * * * * * * * * * * * * * * * * * * * * *
-
+from inspect import signature
 from typing import Callable, Dict, Union
 
 from PySide6.QtCore import QObject
@@ -28,7 +28,6 @@ class WidgetManager:
 
     def __init__(self, controller):
         """Initialize widget manager
-
         Args:
             controller: Controller or component that owns this manager
         """
@@ -38,15 +37,11 @@ class WidgetManager:
 
     def get(self, widget_name: str) -> Union[QObject, QWidget]:
         """Get a widget by name
-
         Supports nested widget names using dot notation (e.g. 'parent.child')
-
         Args:
             widget_name: Name of widget to get
-
         Returns:
             The widget instance
-
         Raises:
             Exception: If widget not found
         """
@@ -85,9 +80,7 @@ class WidgetManager:
         """
         if '.' in name:
             raise NotImplementedError('Dot notation not allowed in widget names for set()')
-
         setattr(self.controller, name, value)
-
         if save_to_config:
             config_key = f'{self.widget_class_name}.{name}'
             self._config_values[config_key] = value
