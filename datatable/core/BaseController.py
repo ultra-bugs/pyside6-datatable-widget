@@ -65,9 +65,7 @@ class BaseController(QWidget, ABC, metaclass=ControllerMeta):
             try:
                 handler_module = importlib.import_module(handler_module_name)
                 handler_class = getattr(handler_module, f'{self.controller_name}Handler')
-                self.handler = handler_class(
-                    widget_manager=self.widget_manager, events=list(self.slot_map.keys())
-                )
+                self.handler = handler_class(widget_manager=self.widget_manager, events=list(self.slot_map.keys()))
             except (ImportError, AttributeError):
                 # If not found, try alternative locations
                 pass
@@ -83,9 +81,7 @@ class BaseController(QWidget, ABC, metaclass=ControllerMeta):
     def _connect_signals(self):
         """Connect signals to slots based on slot_map"""
         if not hasattr(self, 'slot_map'):
-            raise ValueError(
-                f'{self.__class__.__name__} must define slot_map to use auto connect signals'
-            )
+            raise ValueError(f'{self.__class__.__name__} must define slot_map to use auto connect signals')
 
         subscriber = self.handler
         for event in self.handler.events:
@@ -100,12 +96,7 @@ class BaseController(QWidget, ABC, metaclass=ControllerMeta):
 
                 try:
                     widget = self.widget_manager.get(signal_info[0])
-                    self.publisher.connect(
-                        widget,
-                        signal_info[1],
-                        event,
-                        data={'widget': widget},
-                    )
+                    self.publisher.connect(widget, signal_info[1], event, data={'widget': widget})
                     print(f'Connected {signal_info[1]} signal to {event} event')
                     print(widget, event, signal_info)
                 except (AttributeError, Exception) as e:

@@ -56,15 +56,21 @@ class WidgetManager:
 
         for key in keys:
             if not hasattr(current_parent, key):
-                raise Exception(
-                    f'Widget {key} not found in {self.controller}.\n'
-                    f'Was resolved: {".".join(resolved)}'
-                )
+                raise Exception(f'Widget {key} not found in {self.controller}.\nWas resolved: {".".join(resolved)}')
+
+            attr = getattr(current_parent, key)
+
             if key != keys[-1]:
                 resolved.append(key)
-                current_parent = getattr(current_parent, key)
+                current_parent = attr
+                continue
+            if callable(attr):
+                try:
+                    return attr()
+                except TypeError:
+                    return attr
 
-        return getattr(current_parent, keys[-1])
+            return attr
 
     def set(self, name: str, value, save_to_config: bool = False) -> None:
         """Set a widget attribute value

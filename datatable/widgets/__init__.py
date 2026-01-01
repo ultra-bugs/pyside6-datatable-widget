@@ -15,4 +15,5 @@
 #
 from .datatable import DataTable
 from .utils import DataTableView, DatatableContainer
+
 __all__ = ['DataTable', 'DataTableView', 'DatatableContainer']

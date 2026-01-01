@@ -109,18 +109,7 @@ class ExampleWindow(QMainWindow):
             'Senior Javascript Developer',
         ]
 
-        offices = [
-            'Tokyo',
-            'London',
-            'San Francisco',
-            'London',
-            'San Francisco',
-            'New York',
-            'London',
-            'New York',
-            'New York',
-            'Edinburgh',
-        ]
+        offices = ['Tokyo', 'London', 'San Francisco', 'London', 'San Francisco', 'New York', 'London', 'New York', 'New York', 'Edinburgh']
 
         ages = [33, 47, 66, 41, 28, 61, 38, 21, 46, 22]
 

@@ -20,14 +20,4 @@ from .models.delegates import CellDelegate, NumericDelegate, DateDelegate, Boole
 
 __version__ = '1.0.0'
 
-__all__ = [
-    'DataTable',
-    'DataTableModel',
-    'DataType',
-    'SortOrder',
-    'CellDelegate',
-    'NumericDelegate',
-    'DateDelegate',
-    'BooleanDelegate',
-    'DataTableView',
-]
+__all__ = ['DataTable', 'DataTableModel', 'DataType', 'SortOrder', 'CellDelegate', 'NumericDelegate', 'DateDelegate', 'BooleanDelegate', 'DataTableView']

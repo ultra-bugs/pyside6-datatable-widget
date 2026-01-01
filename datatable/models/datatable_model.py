@@ -16,14 +16,7 @@ from enum import Enum, auto
 from typing import Any, Dict, List, Optional, Callable, Union, Tuple
 import datetime
 
-from PySide6.QtCore import (
-    QAbstractTableModel,
-    QModelIndex,
-    Qt,
-    Signal,
-    QObject,
-    QSortFilterProxyModel,
-)
+from PySide6.QtCore import QAbstractTableModel, QModelIndex, Qt, Signal, QObject, QSortFilterProxyModel
 
 
 class DataType(Enum):
@@ -133,9 +126,7 @@ class DataTableModel(QAbstractTableModel):
 
         return False
 
-    def headerData(
-        self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole
-    ) -> Any:
+    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole) -> Any:
         """Return header data for the given section and orientation"""
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             if 0 <= section < len(self._headers):
@@ -189,14 +180,9 @@ class DataTableModel(QAbstractTableModel):
 
             # Set default formatting functions based on type
             if data_type == DataType.DATE:
-                self.setFormattingFunction(
-                    key,
-                    lambda d: d.strftime('%Y-%m-%d') if isinstance(d, datetime.date) else str(d),
-                )
+                self.setFormattingFunction(key, lambda d: d.strftime('%Y-%m-%d') if isinstance(d, datetime.date) else str(d))
             elif data_type == DataType.NUMERIC:
-                self.setFormattingFunction(
-                    key, lambda n: f'{n:,.2f}' if isinstance(n, (int, float)) else str(n)
-                )
+                self.setFormattingFunction(key, lambda n: f'{n:,.2f}' if isinstance(n, (int, float)) else str(n))
             elif data_type == DataType.BOOLEAN:
                 self.setFormattingFunction(key, lambda b: 'Yes' if b else 'No')
 
@@ -299,15 +285,9 @@ class DataTableModel(QAbstractTableModel):
         elif data_type == DataType.NUMERIC:
             self._search_funcs[key] = lambda val, term: term in str(val)
         elif data_type == DataType.DATE:
-            self._search_funcs[key] = (
-                lambda val, term: term in val.strftime('%Y-%m-%d')
-                if isinstance(val, datetime.date)
-                else False
-            )
+            self._search_funcs[key] = lambda val, term: term in val.strftime('%Y-%m-%d') if isinstance(val, datetime.date) else False
         elif data_type == DataType.BOOLEAN:
-            self._search_funcs[key] = lambda val, term: (term.lower() in 'yes' and val) or (
-                term.lower() in 'no' and not val
-            )
+            self._search_funcs[key] = lambda val, term: (term.lower() in 'yes' and val) or (term.lower() in 'no' and not val)
         else:
             self._search_funcs[key] = lambda val, term: term.lower() in str(val).lower()
 
@@ -318,9 +298,7 @@ class DataTableModel(QAbstractTableModel):
         elif data_type == DataType.NUMERIC:
             self._sort_funcs[key] = lambda val: float(val) if val is not None else 0
         elif data_type == DataType.DATE:
-            self._sort_funcs[key] = (
-                lambda val: val if isinstance(val, datetime.date) else datetime.date.min
-            )
+            self._sort_funcs[key] = lambda val: val if isinstance(val, datetime.date) else datetime.date.min
         elif data_type == DataType.BOOLEAN:
             self._sort_funcs[key] = lambda val: bool(val)
         else:
@@ -474,11 +452,7 @@ class DataTableModel(QAbstractTableModel):
         Returns:
             List of matching row indices
         """
-        if (
-            not term
-            or column_key not in self._visible_columns
-            or column_key not in self._search_funcs
-        ):
+        if not term or column_key not in self._visible_columns or column_key not in self._search_funcs:
             return list(range(len(self._data)))
 
         results = []
@@ -503,10 +477,7 @@ class DataTableModel(QAbstractTableModel):
         if column_key not in self._column_keys:
             return None
 
-        if (
-            column_key in self._aggregation_funcs
-            and agg_type in self._aggregation_funcs[column_key]
-        ):
+        if column_key in self._aggregation_funcs and agg_type in self._aggregation_funcs[column_key]:
             # Use custom aggregation function
             values = [row.get(column_key) for row in self._data]
             return self._aggregation_funcs[column_key][agg_type](values)

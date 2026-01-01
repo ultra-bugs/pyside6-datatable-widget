@@ -16,16 +16,7 @@
 from typing import Any, Optional
 
 from PySide6.QtCore import QModelIndex, Qt, QDateTime, QSize
-from PySide6.QtWidgets import (
-    QStyledItemDelegate,
-    QWidget,
-    QStyleOptionViewItem,
-    QDoubleSpinBox,
-    QDateEdit,
-    QCheckBox,
-    QLineEdit,
-    QTextEdit,
-)
+from PySide6.QtWidgets import QStyledItemDelegate, QWidget, QStyleOptionViewItem, QDoubleSpinBox, QDateEdit, QCheckBox, QLineEdit, QTextEdit
 
 
 class CellDelegate(QStyledItemDelegate):
@@ -38,16 +29,7 @@ class CellDelegate(QStyledItemDelegate):
 class NumericDelegate(CellDelegate):
     """Delegate for numeric values"""
 
-    def __init__(
-        self,
-        parent=None,
-        min_value=-1000000,
-        max_value=1000000,
-        decimals=2,
-        step=0.1,
-        suffix='',
-        prefix='',
-    ):
+    def __init__(self, parent=None, min_value=-1000000, max_value=1000000, decimals=2, step=0.1, suffix='', prefix=''):
         super().__init__(parent)
         self.min_value = min_value
         self.max_value = max_value
@@ -56,9 +38,7 @@ class NumericDelegate(CellDelegate):
         self.suffix = suffix
         self.prefix = prefix
 
-    def createEditor(
-        self, parent: QWidget, option: QStyleOptionViewItem, index: QModelIndex
-    ) -> QWidget:
+    def createEditor(self, parent: QWidget, option: QStyleOptionViewItem, index: QModelIndex) -> QWidget:
         """Create a spin box for editing numeric values"""
         editor = QDoubleSpinBox(parent)
         editor.setMinimum(self.min_value)
@@ -98,9 +78,7 @@ class DateDelegate(CellDelegate):
         super().__init__(parent)
         self.format = format
 
-    def createEditor(
-        self, parent: QWidget, option: QStyleOptionViewItem, index: QModelIndex
-    ) -> QWidget:
+    def createEditor(self, parent: QWidget, option: QStyleOptionViewItem, index: QModelIndex) -> QWidget:
         """Create a date edit for editing date values"""
         editor = QDateEdit(parent)
         editor.setCalendarPopup(True)
@@ -143,9 +121,7 @@ class BooleanDelegate(CellDelegate):
         self.true_text = true_text
         self.false_text = false_text
 
-    def createEditor(
-        self, parent: QWidget, option: QStyleOptionViewItem, index: QModelIndex
-    ) -> QWidget:
+    def createEditor(self, parent: QWidget, option: QStyleOptionViewItem, index: QModelIndex) -> QWidget:
         """Create a checkbox for editing boolean values"""
         editor = QCheckBox(parent)
         editor.setAutoFillBackground(True)

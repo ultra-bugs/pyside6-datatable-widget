@@ -15,12 +15,4 @@
 from .datatable_model import DataTableModel, DataType, SortOrder
 from .delegates import CellDelegate, NumericDelegate, DateDelegate, BooleanDelegate
 
-__all__ = [
-    'DataTableModel',
-    'DataType',
-    'SortOrder',
-    'CellDelegate',
-    'NumericDelegate',
-    'DateDelegate',
-    'BooleanDelegate',
-]
+__all__ = ['DataTableModel', 'DataType', 'SortOrder', 'CellDelegate', 'NumericDelegate', 'DateDelegate', 'BooleanDelegate']

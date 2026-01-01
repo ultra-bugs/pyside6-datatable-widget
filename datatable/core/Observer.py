@@ -76,11 +76,7 @@ class Publisher:
             return
         if data:
             kwargs['data'] = data
-        slot.connect(
-            lambda *args, **signal_kwargs: self.notify(
-                event, *args, **{**kwargs, **signal_kwargs}
-            )
-        )
+        slot.connect(lambda *args, **signal_kwargs: self.notify(event, *args, **{**kwargs, **signal_kwargs}))
 
 
 class Subscriber:

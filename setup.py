@@ -27,9 +27,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/ultra-bugs/pyside6-datatable-widget',
-    project_urls={
-        'Bug Tracker': 'https://github.com/ultra-bugs/pyside6-datatable-widget/issues',
-    },
+    project_urls={'Bug Tracker': 'https://github.com/ultra-bugs/pyside6-datatable-widget/issues'},
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
@@ -41,7 +39,5 @@ setup(
     package_dir={'': '.'},
     packages=find_packages(),
     python_requires='>=3.10',
-    install_requires=[
-        'PySide6>=6.1.0',
-    ],
+    install_requires=['PySide6>=6.1.0'],
 )

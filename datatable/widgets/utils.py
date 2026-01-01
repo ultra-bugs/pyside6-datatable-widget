@@ -21,6 +21,7 @@ class DatatableContainer(QWidget):
     This class serves as a base class for creating containers that hold
     DataTable widgets.
     """
+
     pass
 
 
