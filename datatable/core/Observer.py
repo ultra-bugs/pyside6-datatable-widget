@@ -98,11 +98,7 @@ class Publisher:
         if slot is None:
             return
 
-        slot.connect(
-                lambda *s_args, **signal_kwargs: self.notify(
-                        event, *[*args, *s_args], **{**kwargs, **signal_kwargs}
-                )
-        )
+        slot.connect(lambda *s_args, **signal_kwargs: self.notify(event, *[*args, *s_args], **{**kwargs, **signal_kwargs}))
 
 
 class Subscriber:
@@ -137,7 +133,7 @@ class Subscriber:
                 all_params = {}
                 # Add individual positional args by index
                 for i, arg in enumerate(args):
-                    all_params[f"arg{i}"] = arg
+                    all_params[f'arg{i}'] = arg
                 # Add kwargs
                 for k, v in kwargs.items():
                     if not k.startswith('*'):
@@ -220,10 +216,9 @@ class Subscriber:
                         elif args:
                             return method(*args)
                         else:
-                            raise TypeError(
-                                    f"Could not match parameters for {method_name}. Original error: {error_msg}")
+                            raise TypeError(f'Could not match parameters for {method_name}. Original error: {error_msg}')
                     except TypeError:
-                        raise TypeError(f"Could not match parameters for {method_name}. Original error: {error_msg}")
+                        raise TypeError(f'Could not match parameters for {method_name}. Original error: {error_msg}')
                 else:
                     raise
             except Exception as e:

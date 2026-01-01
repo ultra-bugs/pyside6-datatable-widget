@@ -14,7 +14,7 @@
 
 #
 #
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Self, Tuple, Union
 
 from PySide6.QtCore import QPoint, Qt, Signal
 from PySide6.QtGui import QAction
@@ -22,7 +22,7 @@ from PySide6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QHeaderView, QLabe
 
 from ..core.BaseController import BaseController
 from ..models.datatable_model import DataTableModel, DataType, SortOrder
-from ..models.delegates import BooleanDelegate, DateDelegate, NumericDelegate
+from ..models.delegates import BooleanDelegate, DateDelegate, NumericDelegate, ProgressDelegate
 from ..ui.untitled import Ui_DataTable
 from ..widgets.handlers.DataTableHandler import DataTableProxyModel
 
@@ -55,35 +55,17 @@ class DataTable(Ui_DataTable, BaseController):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._model = DataTableModel(self)
-        self._proxy_model = DataTableProxyModel(self)
-        self._proxy_model.setSourceModel(self._model)
-        self._proxy_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
-        self._proxy_model.setDynamicSortFilter(True)
+        self._proxyModel = DataTableProxyModel(self)
+        self._proxyModel.setSourceModel(self._model)
+        self._proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
+        self._proxyModel.setDynamicSortFilter(True)
+        self.tableView.setModel(self._proxyModel)
 
         # Pagination state
         self._page = 1
         self._rows_per_page = 10
         self._total_pages = 1
-
-        # Connect model signals
-        self._model.modelReset.connect(self._onModelReset)
-        self._model.rowExpandedCollapsed.connect(self._onRowExpandedCollapsed)
-
-        # Setup UI elements right after initializing self._model
-        self._setupHeaderContextMenu()
-        self._setupRowContextMenu()
-
-        # Configure the view
-        self.tableView.setModel(self._proxy_model)
-        self.tableView.setSortingEnabled(True)
-        self.tableView.setSelectionBehavior(QTableView.SelectRows)
-        self.tableView.setSelectionMode(QTableView.SingleSelection)
-        self.tableView.verticalHeader().setVisible(False)
-        self.tableView.horizontalHeader().setSectionsMovable(True)
-        self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
-        self.tableView.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tableView.horizontalHeader().customContextMenuRequested.connect(self._showHeaderContextMenu)
-
+        self._connectModelSignals()._uiBehaviorSetup()
         # Initialize pagination
         self.rowsPerPageCombo.clear()
         self.rowsPerPageCombo.addItems(['1', '5', '10', '25', '50', '100'])
@@ -92,125 +74,88 @@ class DataTable(Ui_DataTable, BaseController):
 
         # Preferences
         self._show_integers_without_decimals = True
-    
-    def setupUi0ld(self, widget):
-        """Setup the UI components"""
-        self.setMinimumSize(640, 480)
 
-        # Main layout
-        main_layout = QVBoxLayout(widget)
-        main_layout.setContentsMargins(0, 0, 0, 0)
+    def _connectModelSignals(self):
+        self._model.modelReset.connect(self._onModelReset)
+        self._model.rowExpandedCollapsed.connect(self._onRowExpandedCollapsed)
+        return self
 
-        # Top toolbar
-        top_toolbar = QHBoxLayout()
-
-        # Search area
-        search_label = QLabel('Search:')
-        top_toolbar.addWidget(search_label)
-
-        self.searchInput = QLineEdit()
-        self.searchInput.setPlaceholderText('Search in table...')
-        top_toolbar.addWidget(self.searchInput)
-
-        top_toolbar.addStretch()
-
-        # Column visibility button
-        self.columnVisibilityButton = QPushButton('Columns')
-        top_toolbar.addWidget(self.columnVisibilityButton)
-
-        main_layout.addLayout(top_toolbar)
-
-        # Table view
-        self.tableView = QTableView()
-        main_layout.addWidget(self.tableView)
-
-        # Bottom toolbar
-        bottom_toolbar = QHBoxLayout()
-
-        # Pagination controls
-        self.firstPageButton = QPushButton('«')
-        self.firstPageButton.setToolTip('First Page')
-        bottom_toolbar.addWidget(self.firstPageButton)
-
-        self.prevPageButton = QPushButton('‹')
-        self.prevPageButton.setToolTip('Previous Page')
-        bottom_toolbar.addWidget(self.prevPageButton)
-
-        self.pageLabel = QLabel('Page:')
-        bottom_toolbar.addWidget(self.pageLabel)
-
-        self.pageSpinBox = QSpinBox()
-        self.pageSpinBox.setMinimum(1)
-        self.pageSpinBox.setMaximum(1)
-        bottom_toolbar.addWidget(self.pageSpinBox)
-
-        self.totalPagesLabel = QLabel('of 1')
-        bottom_toolbar.addWidget(self.totalPagesLabel)
-
-        self.nextPageButton = QPushButton('›')
-        self.nextPageButton.setToolTip('Next Page')
-        bottom_toolbar.addWidget(self.nextPageButton)
-
-        self.lastPageButton = QPushButton('»')
-        self.lastPageButton.setToolTip('Last Page')
-        bottom_toolbar.addWidget(self.lastPageButton)
-
-        bottom_toolbar.addStretch()
-
-        # Rows per page
-        rows_per_page_label = QLabel('Show entries:')
-        bottom_toolbar.addWidget(rows_per_page_label)
-
-        self.rowsPerPageCombo = QComboBox()
-        bottom_toolbar.addWidget(self.rowsPerPageCombo)
-
-        # Total entries
-        self.totalEntriesLabel = QLabel('Showing 0 to 0 of 0 entries')
-        bottom_toolbar.addWidget(self.totalEntriesLabel)
-
-        main_layout.addLayout(bottom_toolbar)
-
-        # Status bar
-        status_bar = QFrame()
-        status_bar.setFrameShape(QFrame.StyledPanel)
-        status_bar.setFrameShadow(QFrame.Sunken)
-        status_layout = QHBoxLayout(status_bar)
-        status_layout.setContentsMargins(5, 2, 5, 2)
-
-        self.statusLabel = QLabel('')
-        status_layout.addWidget(self.statusLabel)
-
-        main_layout.addWidget(status_bar)
+    def _uiBehaviorSetup(self):
+        # Setup UI elements right after initializing self._model
+        self._setupHeaderContextMenu()
+        self._setupRowContextMenu()
+        # Configure the view
+        self.tableView.setSortingEnabled(True)
+        self.tableView.setSelectionBehavior(QTableView.SelectRows)
+        self.tableView.setSelectionMode(QTableView.SingleSelection)
+        self.tableView.verticalHeader().setVisible(False)
+        self.tableView.horizontalHeader().setSectionsMovable(True)
+        self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
+        self.tableView.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tableView.horizontalHeader().customContextMenuRequested.connect(self._showHeaderContextMenu)
+        return self
 
     # Public API
-    def setModel(self, model: DataTableModel) -> None:
+    def setModel(self, model: DataTableModel) -> Self:
         """Set the data model
 
         Args:
             model: DataTableModel instance
         """
         self._model = model
-        self._proxy_model.setSourceModel(model)
-
+        self._proxyModel.setSourceModel(model)
         # Connect model signals
         self._model.modelReset.connect(self._onModelReset)
         self._model.rowExpandedCollapsed.connect(self._onRowExpandedCollapsed)
-
         # Apply delegates
         self._applyDelegates()
-
         # Update UI
         self._updatePagination()
+        return self
 
-    def setData(self, data: List[Dict[str, Any]]) -> None:
+    def setUiSelectionType(
+        self, mode: Union[QTableView.SelectionMode, int] = QTableView.SingleSelection, behavior: Union[QTableView.SelectionBehavior, int] = QTableView.SelectRows
+    ) -> Self:
+        """Set the selection mode and behavior for the table view.
+
+        Args:
+            mode: The selection mode (e.g., QTableView.SingleSelection, QTableView.MultiSelection).
+            behavior: The selection behavior (e.g., QTableView.SelectRows, QTableView.SelectItems).
+        """
+        try:
+            if isinstance(mode, int):
+                # Validate integer mode against enum values
+                if not any(mode == item.value for item in QTableView.SelectionMode):
+                    raise ValueError(f'Invalid selection mode integer: {mode}')
+                self.tableView.setSelectionMode(QTableView.SelectionMode(mode))
+            elif isinstance(mode, QTableView.SelectionMode):
+                self.tableView.setSelectionMode(mode)
+            else:
+                raise TypeError(f'Invalid type for mode: {type(mode)}')
+
+            if isinstance(behavior, int):
+                # Validate integer behavior against enum values
+                if not any(behavior == item.value for item in QTableView.SelectionBehavior):
+                    raise ValueError(f'Invalid selection behavior integer: {behavior}')
+                self.tableView.setSelectionBehavior(QTableView.SelectionBehavior(behavior))
+            elif isinstance(behavior, QTableView.SelectionBehavior):
+                self.tableView.setSelectionBehavior(behavior)
+            else:
+                raise TypeError(f'Invalid type for behavior: {type(behavior)}')
+            return self
+        except (ValueError, TypeError) as e:
+            raise
+
+    def setData(self, data: List[Dict[str, Any]]) -> Self:
         """Set the table data
 
         Args:
             data: List of row data dictionaries
         """
         self._model.setModelData(data)
+        return self
 
-    def setColumns(self, columns: List[Tuple[str, str, DataType]]) -> None:
+    def setColumns(self, columns: List[Tuple[str, str, DataType]]) -> Self:
         """Set the table columns
 
         Args:
@@ -218,16 +163,18 @@ class DataTable(Ui_DataTable, BaseController):
         """
         self._model.setColumns(columns)
         self._applyDelegates()
+        return self
 
-    def setVisibleColumns(self, columns: List[str]) -> None:
+    def setVisibleColumns(self, columns: List[str]) -> Self:
         """Set which columns are visible
 
         Args:
             columns: List of column keys to display
         """
         self._model.setVisibleColumns(columns)
+        return self
 
-    def enableRowCollapsing(self, enabled: bool = True, child_row_key: str = 'children') -> None:
+    def enableRowCollapsing(self, enabled: bool = True, child_row_key: str = 'children') -> Self:
         """Enable or disable row collapsing
 
         Args:
@@ -235,8 +182,9 @@ class DataTable(Ui_DataTable, BaseController):
             child_row_key: Key in row data for child rows
         """
         self._model.enableRowCollapsing(enabled, child_row_key)
+        return self
 
-    def search(self, term: str) -> None:
+    def search(self, term: str) -> Self:
         """Search the table
 
         Args:
@@ -247,8 +195,9 @@ class DataTable(Ui_DataTable, BaseController):
             self.searchInput.setText(term)
         else:
             self._applySearch(term)
+        return self
 
-    def sort(self, column_key: str, order: SortOrder = SortOrder.ASCENDING) -> None:
+    def sort(self, column_key: str, order: SortOrder = SortOrder.ASCENDING) -> Self:
         """Sort the table
 
         Args:
@@ -256,27 +205,30 @@ class DataTable(Ui_DataTable, BaseController):
             order: Sort order
         """
         if column_key not in self._model._visible_columns:
-            return
+            return self
 
         col_index = self._model._visible_columns.index(column_key)
         self.tableView.sortByColumn(col_index, order.value)
+        return self
 
-    def setPage(self, page: int) -> None:
+    def setPage(self, page: int) -> Self:
         """Set the current page
 
         Args:
             page: Page number (1-based)
         """
         if page < 1 or page > self._total_pages:
-            return
+            # TODO: OutOfIndexException should i ?
+            return self
 
         self._page = page
         self.pageSpinBox.setValue(page)
         self._updateVisibleRows()
         self._updateCurrentPageButton()
         self.pageChanged.emit(page)
+        return self
 
-    def setRowsPerPage(self, rows: int) -> None:
+    def setRowsPerPage(self, rows: int) -> Self:
         """Set rows per page
 
         Args:
@@ -291,6 +243,7 @@ class DataTable(Ui_DataTable, BaseController):
             self.rowsPerPageCombo.setCurrentIndex(index)
 
         self._updatePagination()
+        return self
 
     def getData(self) -> List[Dict[str, Any]]:
         """Get current table data
@@ -309,9 +262,8 @@ class DataTable(Ui_DataTable, BaseController):
         indexes = self.tableView.selectedIndexes()
         if not indexes:
             return None
-
         proxy_row = indexes[0].row()
-        model_row = self._proxy_model.mapToSource(indexes[0]).row()
+        model_row = self._proxyModel.mapToSource(indexes[0]).row()
 
         return self._model._data[model_row]
 
@@ -329,11 +281,11 @@ class DataTable(Ui_DataTable, BaseController):
 
     def insertRow(self, row_index: int, row_data: Dict[str, Any]) -> bool:
         """Insert a new row at the specified index
-        
+
         Args:
             row_index: Index where to insert the row (0-based)
             row_data: Dictionary containing the row data
-            
+
         Returns:
             Success status
         """
@@ -341,13 +293,13 @@ class DataTable(Ui_DataTable, BaseController):
         if success:
             self._updatePagination()
         return success
-    
+
     def appendRow(self, row_data: Dict[str, Any]) -> bool:
         """Append a row at the end of the table
-        
+
         Args:
             row_data: Dictionary containing the row data
-            
+
         Returns:
             Success status
         """
@@ -355,28 +307,36 @@ class DataTable(Ui_DataTable, BaseController):
         if success:
             self._updatePagination()
         return success
-    
-    def setIntegerDisplay(self, show_without_decimals: bool) -> None:
+
+    def setIntegerDisplay(self, show_without_decimals: bool) -> Self:
         """Set whether to display integers without decimal places
-        
+
         Args:
             show_without_decimals: If True, integers will be displayed without decimal places
         """
         self._show_integers_without_decimals = show_without_decimals
-        
+
         # Update numeric formatting functions
         for col_key, data_type in self._model._column_types.items():
             if data_type == DataType.NUMERIC:
                 if show_without_decimals:
                     self._model.setFormattingFunction(
-                        col_key, lambda n: str(int(n)) if isinstance(n, (int, float)) and float(n).is_integer()
-                                else (f'{n:,.2f}' if isinstance(n, (int, float)) else str(n))
+                        col_key, lambda n: str(int(n)) if isinstance(n, (int, float)) and float(n).is_integer() else (f'{n:,.2f}' if isinstance(n, (int, float)) else str(n))
                     )
                 else:
-                    self._model.setFormattingFunction(
-                        col_key, lambda n: f'{n:,.2f}' if isinstance(n, (int, float)) else str(n)
-                    )
-    
+                    self._model.setFormattingFunction(col_key, lambda n: f'{n:,.2f}' if isinstance(n, (int, float)) else str(n))
+        return self
+
+    def setFormattingFunction(self, column_key: str, func: Callable) -> Self:
+        """Set the formatting function for a column
+
+        Args:
+            column_key: Column key
+            func: Formatting function
+        """
+        self._model.setFormattingFunction(column_key, func)
+        return self
+
     # Private methods
     def _onModelReset(self) -> None:
         """Handle model reset"""
@@ -402,7 +362,6 @@ class DataTable(Ui_DataTable, BaseController):
         """Apply delegates based on column types"""
         for i, col_key in enumerate(self._model._visible_columns):
             data_type = self._model._column_types.get(col_key)
-
             if data_type == DataType.NUMERIC:
                 delegate = NumericDelegate(self.tableView)
                 if self._show_integers_without_decimals:
@@ -413,6 +372,9 @@ class DataTable(Ui_DataTable, BaseController):
                 self.tableView.setItemDelegateForColumn(i, delegate)
             elif data_type == DataType.BOOLEAN:
                 delegate = BooleanDelegate(self.tableView)
+                self.tableView.setItemDelegateForColumn(i, delegate)
+            elif data_type == DataType.PROGRESS:
+                delegate = ProgressDelegate(self.tableView)
                 self.tableView.setItemDelegateForColumn(i, delegate)
 
     def clearLayout(self, layout):
@@ -508,12 +470,12 @@ class DataTable(Ui_DataTable, BaseController):
             term: Search term
         """
         # Use the advanced search capabilities of DataTableProxyModel
-        if hasattr(self._proxy_model, 'setSearchTerm'):
-            self._proxy_model.setSearchTerm(term)
+        if hasattr(self._proxyModel, 'setSearchTerm'):
+            self._proxyModel.setSearchTerm(term)
         else:
             # Fallback to basic filtering if using standard QSortFilterProxyModel
-            self._proxy_model.setFilterFixedString(term)
-            self._proxy_model.setFilterCaseSensitivity(Qt.CaseInsensitive)
+            self._proxyModel.setFilterFixedString(term)
+            self._proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
 
         # Reset pagination
         self._page = 1

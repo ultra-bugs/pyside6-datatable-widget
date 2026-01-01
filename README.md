@@ -14,6 +14,8 @@ A powerful DataTable widget for PySide6 applications with functionality similar 
 - **Aggregation Functions**: Calculate sums, averages, percentages, etc. [SEMI-IMPLEMENTED]
 - **Custom Formatting**: Format data display for different column types
 - **Observer Pattern**: Event-driven architecture for clear code organization
+- **Builtin-Delegates**: Packages has some useful delegates built-in for popular datatypes
+- **Fluent-Interface**: Allow you channing calls on most methods of `DataTable` instance (return self)
 
 ## Installation
 
@@ -48,19 +50,19 @@ class MainWindow(QMainWindow):
             ("id", "ID", DataType.NUMERIC),
             ("name", "Name", DataType.STRING),
             ("age", "Age", DataType.NUMERIC),
-            ("active", "Active", DataType.BOOLEAN)
+            ("active", "Active", DataType.BOOLEAN),
+            ("progress", "Progress", DataType.PROGRESS)
         ]
         
         # Set up data
         data = [
-            {"id": 1, "name": "John", "age": 30, "active": True},
-            {"id": 2, "name": "Jane", "age": 25, "active": False},
-            {"id": 3, "name": "Bob", "age": 40, "active": True}
+            {"id": 1, "name": "John", "age": 30, "active": True, "progress": 75},
+            {"id": 2, "name": "Jane", "age": 25, "active": False, "progress": 30},
+            {"id": 3, "name": "Bob", "age": 40, "active": True, "progress": 100}
         ]
         
         # Apply to table
-        self.data_table.setColumns(columns)
-        self.data_table.setData(data)
+        self.data_table.setColumns(columns).setData(data)
         
         # Connect signals
         self.data_table.rowSelected.connect(self.on_row_selected)
@@ -163,19 +165,21 @@ Main widget class that provides the UI and functionality.
 
 #### Methods
 
-- `setData(data)`: Set table data
-- `appendRow(row_data)`: Append a row to the table
-- `insertRow(row_index, row_data)`: Insert a row at a specific index
-- `setColumns(columns)`: Set table columns
-- `setVisibleColumns(columns)`: Set which columns are visible
-- `enableRowCollapsing(enabled, child_row_key)`: Enable/disable row collapsing
-- `search(term)`: Search the table
-- `sort(column_key, order)`: Sort the table
-- `setPage(page)`: Set current page
-- `setRowsPerPage(rows)`: Set rows per page
+- `setData(data) -> Self`: Set table data
+- `appendRow(row_data) -> bool`: Append a row to the table
+- `insertRow(row_index, row_data) -> bool`: Insert a row at a specific index
+- `setColumns(columns) -> Self`: Set table columns
+- `setVisibleColumns(columns) -> Self`: Set which columns are visible
+- `enableRowCollapsing(enabled, child_row_key) -> Self`: Enable/disable row collapsing
+- `setFormattingFunction(column_key, func) -> Self`: Set formatting function. Actually, this method is alias of `Model.setFormattingFunction`
+- `search(term) -> Self`: Search the table
+- `sort(column_key, order) -> Self`: Sort the table
+- `setPage(page) -> Self`: Set current page
+- `setRowsPerPage(rows) -> Self`: Set rows per page
 - `getData()`: Get current table data
 - `getSelectedRow()`: Get selected row data
 - `getAggregateValue(column_key, agg_type)`: Get aggregate value for column
+- `setUiSelectionType(mode, behavior) -> Self`: Set selection mode and behavior for the table view
 
 #### Signals
 

@@ -21,17 +21,15 @@ with open('README.md', 'r', encoding='utf-8') as fh:
 
 setup(
     name='pyside6-datatable-widget',
-    version="1.1.0.6",
+    version='1.1.0.6',
     author='Zuko',
     author_email='tansautn@gmail.com',
     description='A PySide6 DataTable widget with jQuery DataTable-like functionality',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/ultra-bugs/pyside6-datatable-widget',
-    project_urls={
-        'Bug Tracker': 'https://github.com/ultra-bugs/pyside6-datatable-widget/issues',
-    },
-    license="GPLv3",
+    project_urls={'Bug Tracker': 'https://github.com/ultra-bugs/pyside6-datatable-widget/issues'},
+    license='GPLv3',
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: MIT License',
@@ -39,7 +37,7 @@ setup(
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Topic :: Software Development :: User Interfaces',
-        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
     ],
     package_dir={'': '.'},
     packages=find_packages(),

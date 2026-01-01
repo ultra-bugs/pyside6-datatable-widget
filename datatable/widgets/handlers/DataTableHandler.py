@@ -26,7 +26,7 @@ from ...models.datatable_model import DataType, SortOrder
 
 
 class DataTableProxyModel(QSortFilterProxyModel):
-    """Extensive proxy model with advanced filtration ability """
+    """Extensive proxy model with advanced filtration ability"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -195,10 +195,10 @@ class DataTableHandler(Subscriber):
 
         # Apply filtering by setting visible rows on the model
         # Hoặc sử dụng proxy model nếu được triển khai
-        if hasattr(self.table._proxy_model, 'setSearchTerm') and hasattr(self.table._proxy_model, 'setDataTypeFilter'):
+        if hasattr(self.table._proxyModel, 'setSearchTerm') and hasattr(self.table._proxyModel, 'setDataTypeFilter'):
             # Sử dụng proxy model nếu có các phương thức phù hợp
-            self.table._proxy_model.setSearchTerm(search_term)
-            self.table._proxy_model.setDataTypeFilter(data_type)
+            self.table._proxyModel.setSearchTerm(search_term)
+            self.table._proxyModel.setDataTypeFilter(data_type)
         else:
             # Hoặc áp dụng bộ lọc thông qua các phương thức có sẵn
             if hasattr(self.table, 'applyFilters'):
@@ -296,14 +296,15 @@ class DataTableHandler(Subscriber):
             data: Event data
         """
         import inspect
-        print("on_table_row_clicked", inspect.getframeinfo(inspect.currentframe()))
+
+        print('on_table_row_clicked', inspect.getframeinfo(inspect.currentframe()))
         breakpoint()
         if not index.isValid():
             return
 
         # Map proxy index to source index
-        if hasattr(self.table, '_proxy_model') and self.table._proxy_model:
-            source_index = self.table._proxy_model.mapToSource(index)
+        if hasattr(self.table, '_proxyModel') and self.table._proxyModel:
+            source_index = self.table._proxyModel.mapToSource(index)
             row = source_index.row()
         else:
             row = index.row()

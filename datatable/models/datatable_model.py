@@ -26,6 +26,7 @@ class DataType(Enum):
     NUMERIC = auto()
     DATE = auto()
     BOOLEAN = auto()
+    PROGRESS = auto()
     CUSTOM = auto()
 
 
@@ -39,6 +40,7 @@ class SortOrder(Enum):
 
 class DataTableModel(QAbstractTableModel):
     """Model for the DataTable widget"""
+
     rowExpandedCollapsed = Signal(int, bool)  # row, is_expanded
 
     def __init__(self, parent: Optional[QObject] = None):
@@ -121,7 +123,7 @@ class DataTableModel(QAbstractTableModel):
                 return False
 
             self._data[row][col_key] = value
-            self.dataChanged.emit(index, index, [role]) # TopLeft, BottomRight, Roles args
+            self.dataChanged.emit(index, index, [role])  # TopLeft, BottomRight, Roles args
             return True
 
         return False
@@ -543,38 +545,38 @@ class DataTableModel(QAbstractTableModel):
 
     def _insertRow(self, row_index: int, row_data: Dict[str, Any]) -> bool:
         """Insert a new row at the specified index
-        
+
         Args:
             row_index: Index where to insert the row (0-based)
             row_data: Dictionary containing the row data
-            
+
         Returns:
             Success status
         """
         # Validate row index
         if row_index < 0 or row_index > len(self._data):
             return False
-            
+
         # Insert the row at the specified index
         self.beginInsertRows(QModelIndex(), row_index, row_index)
         self._data.insert(row_index, row_data)
         self.endInsertRows()
-        
+
         # Emit signals with proper parameters
         # Create model indexes for the entire row that was inserted
         if len(self._visible_columns) > 0:
             topLeft = self.index(row_index, 0)
             bottomRight = self.index(row_index, len(self._visible_columns) - 1)
             self.dataChanged.emit(topLeft, bottomRight, [Qt.DisplayRole])
-        
+
         return True
-        
+
     def appendRow(self, row_data: Dict[str, Any]) -> bool:
         """Append a row at the end of the table
-        
+
         Args:
             row_data: Dictionary containing the row data
-            
+
         Returns:
             Success status
         """

@@ -15,6 +15,7 @@
 
 import sys
 from pathlib import Path
+
 root = Path(__file__).resolve().parent.parent
 sys.path.append(str(root))
 import datetime
@@ -176,6 +177,7 @@ class ExampleWindow(QMainWindow):
     def setStyleFusion(self):
         """Set the application style to Fusion and apply a dark theme."""
         from PySide6.QtWidgets import QStyleFactory
+
         QApplication.setStyle(QStyleFactory.create('Fusion'))
 
 

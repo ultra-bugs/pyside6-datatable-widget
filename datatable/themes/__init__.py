@@ -13,4 +13,4 @@
 #              * * * * * * * * * * * * * * * * * * * * *
 
 # This file ensures that the themes directory is recognized as a Python package
-# and included in the distribution when publishing to PyPI. 
+# and included in the distribution when publishing to PyPI.

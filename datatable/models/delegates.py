@@ -16,7 +16,7 @@
 from typing import Any, Optional
 
 from PySide6.QtCore import QModelIndex, Qt, QDateTime, QSize
-from PySide6.QtWidgets import QStyledItemDelegate, QWidget, QStyleOptionViewItem, QDoubleSpinBox, QDateEdit, QCheckBox, QLineEdit, QTextEdit
+from PySide6.QtWidgets import QStyledItemDelegate, QWidget, QStyleOptionViewItem, QDoubleSpinBox, QDateEdit, QCheckBox, QLineEdit, QTextEdit, QProgressBar, QStyle
 
 
 class CellDelegate(QStyledItemDelegate):
@@ -201,3 +201,54 @@ class TextDelegate(CellDelegate):
         size = super().sizeHint(option, index)
         size.setHeight(max(size.height(), 80))
         return size
+
+
+class ProgressDelegate(CellDelegate):
+    """Delegate for progress bar values"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+    def paint(self, painter: Any, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+        """Paint the progress bar"""
+        progress = index.model().data(index, Qt.DisplayRole)
+        if not isinstance(progress, (int, float)):
+            super().paint(painter, option, index)
+            return
+
+        progress_bar_option = QStyleOptionViewItem(option)
+        progress_bar_option.rect = option.rect
+        progress_bar_option.state = option.state | QStyle.State_Active
+        progress_bar_option.progress = int(progress)
+        progress_bar_option.text = f'{int(progress)}%'
+        progress_bar_option.displayAlignment = Qt.AlignCenter
+
+        progress_bar = QProgressBar()
+        progress_bar.setRange(0, 100)
+        progress_bar.setValue(int(progress))
+
+        painter.save()
+        painter.translate(option.rect.topLeft())
+        progress_bar.resize(option.rect.size())
+        progress_bar.render(painter)
+        painter.restore()
+
+    def createEditor(self, parent: QWidget, option: QStyleOptionViewItem, index: QModelIndex) -> QWidget:
+        """Create a spin box for editing progress values"""
+        editor = QDoubleSpinBox(parent)
+        editor.setMinimum(0)
+        editor.setMaximum(100)
+        editor.setDecimals(0)
+        return editor
+
+    def setEditorData(self, editor: QWidget, index: QModelIndex) -> None:
+        """Set the editor data"""
+        value = index.model().data(index, Qt.EditRole)
+        try:
+            editor.setValue(int(value) if value is not None else 0)
+        except (ValueError, TypeError):
+            editor.setValue(0)
+
+    def setModelData(self, editor: QWidget, model: Any, index: QModelIndex) -> None:
+        """Set the model data"""
+        model.setData(index, int(editor.value()), Qt.EditRole)
