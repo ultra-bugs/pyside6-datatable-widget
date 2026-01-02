@@ -16,7 +16,7 @@
 #
 from typing import Any, Callable, Dict, List, Optional, Self, Tuple, Union
 
-from PySide6.QtCore import QPoint, Qt, Signal
+from PySide6.QtCore import QPoint, Qt, Signal, QTimer, QItemSelectionModel
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QComboBox,
@@ -154,8 +154,46 @@ class DataTable(Ui_DataTable, BaseController):
         for row in range(rows):
             index = self._paginationModel.index(row, 0)
             selection_model.select(
-                index, Qt.ItemSelectionModel.Toggle | Qt.ItemSelectionModel.Rows
+                index, QItemSelectionModel.Toggle | QItemSelectionModel.Rows
             )
+
+    def _save_state(self):
+        """Save the current UI state of the table."""
+        selected_ids = {row.get('id') for row in self.getSelectedRows()}
+        state = {
+            'v_scroll': self.tableView.verticalScrollBar().value(),
+            'h_scroll': self.tableView.horizontalScrollBar().value(),
+            'selected_ids': selected_ids,
+        }
+        return state
+
+    def _restore_state(self, state):
+        """Restore the UI state of the table."""
+        if not state:
+            return
+
+        # Restore selection
+        selected_ids = state.get('selected_ids', set())
+        if selected_ids:
+            selection_model: QItemSelectionModel = self.tableView.selectionModel()
+            selection_model.clearSelection()
+            
+            # Iterate through the visible rows in the proxy model
+            for row in range(self._paginationModel.rowCount()):
+                # Map view index to source model index
+                pagination_index = self._paginationModel.index(row, 0)
+                filter_index = self._paginationModel.mapToSource(pagination_index)
+                source_index = self._proxyModel.mapToSource(filter_index)
+                
+                # Get the unique ID from the source model
+                row_data = self._model.getRowData(source_index.row())
+                if row_data and row_data.get('id') in selected_ids:
+                    # Select the row in the view (tableView)
+                    selection_model.select(pagination_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
+
+        # Restore scroll positions after the view has been updated
+        QTimer.singleShot(0, lambda: self.tableView.verticalScrollBar().setValue(state.get('v_scroll', 0)))
+        QTimer.singleShot(0, lambda: self.tableView.horizontalScrollBar().setValue(state.get('h_scroll', 0)))
 
     # Public API
     def setModel(self, model: DataTableModel) -> Self:
@@ -212,12 +250,14 @@ class DataTable(Ui_DataTable, BaseController):
             raise
 
     def setData(self, data: List[Dict[str, Any]]) -> Self:
-        """Set the table data
+        """Set the table data while preserving UI state.
 
         Args:
             data: List of row data dictionaries
         """
+        state = self._save_state()
         self._model.setModelData(data)
+        self._restore_state(state)
         return self
 
     def setColumns(self, columns: List[Tuple[str, str, DataType]]) -> Self:

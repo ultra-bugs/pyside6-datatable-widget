@@ -289,70 +289,33 @@ class DataTableHandler(Subscriber):
         sort_order = header.sortIndicatorOrder()
 
         self.table.sortChanged.emit(column_key, SortOrder.ASCENDING if sort_order == 0 else SortOrder.DESCENDING)
+    
     def on_table_row_clicked(self, index: QModelIndex, data: Dict[str, Any] = None):
         """Handle table row clicked
 
         Args:
-            index: Model index
+            index: Model index from the view (potentially a proxy model)
             data: Event data
         """
         if not index.isValid():
             return
+
+        # Map the view index back to the source model index
+        pagination_index = index
+        filter_index = self.table._paginationModel.mapToSource(pagination_index)
+        source_index = self.table._proxyModel.mapToSource(filter_index)
         
-        # Map from view index to source model index
-        # from core.Logging import logger
-        # logger.debug('on_table_row_clicked')
-        # logger.opt(capture=True).debug('current_index', current_index=index)
-        current_index = index
-        model = self.table.tableView.model()
-        
-        # Traverse down the proxy chain until we reach the base model
-        while isinstance(model, QSortFilterProxyModel):
-            # current_index = model.mapToSource(current_index)
-            model = model.sourceModel()
-        row = index.row()
+        source_row = source_index.row()
+
         # Check if it's the expand/collapse column and the first column
         if index.column() == 0 and self.table._model._row_collapsing_enabled:
-            if self.table._model.isRowCollapsable(row):
-                self.table._model.toggleRowExpanded(row)
+            if self.table._model.isRowCollapsable(source_row):
+                self.table._model.toggleRowExpanded(source_row)
                 return
         
-        if row > -1:
-            # Emit signal
-            self.table.rowSelected.emit(row, self.table._model._data[row])
-    
-    def on_table_row_clicked_need_fix(self, index: QModelIndex, data: Dict[str, Any] = None):
-        """Handle table row clicked
-
-        Args:
-            index: Model index
-            data: Event data
-        """
-        if not index.isValid():
-            return
-        
-        # Map from view index to source model index
-        from core.Logging import logger
-        logger.debug('on_table_row_clicked')
-        logger.opt(capture=True).debug('current_index', current_index=index)
-        current_index = index
-        model = self.table.tableView.model()
-        
-        # Traverse down the proxy chain until we reach the base model
-        while isinstance(model, QSortFilterProxyModel):
-            current_index = model.mapToSource(current_index)
-            model = model.sourceModel()
-            logger.opt(capture=True).debug('current_index reassigned', model=model, modelType=type(model), current_index=current_index)
-        row = current_index.row()
-        logger.opt(capture=True).debug('row final', row=row)
-        # Check if it's the expand/collapse column and the first column
-        if index.column() == 0 and self.table._model._row_collapsing_enabled:
-            if self.table._model.isRowCollapsable(row):
-                self.table._model.toggleRowExpanded(row)
-                return
-
-        # Emit signal
-        self.table.rowSelected.emit(row, self.table._model._data[row])
+        if source_row > -1:
+            # Emit signal with the correct source row and data
+            self.table.rowSelected.emit(source_row, self.table._model._data[source_row])
 
     def on_column_visibility_changed(self, data: Dict[str, Any] = None):
         """Handle column visibility button clicked

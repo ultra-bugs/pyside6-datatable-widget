@@ -103,6 +103,12 @@ class DataTableModel(QAbstractTableModel):
 
         return None
 
+    def getRowData(self, row: int) -> Optional[Dict[str, Any]]:
+        """Get the entire data for a specific row."""
+        if 0 <= row < len(self._data):
+            return self._data[row]
+        return None
+
     def setData(self, index: QModelIndex, value: Any, role: int = Qt.EditRole) -> bool:
         """Set data for the given index and role"""
         if not index.isValid():
