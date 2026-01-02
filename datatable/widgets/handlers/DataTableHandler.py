@@ -17,12 +17,33 @@
 #
 from typing import Any, Dict
 
-from PySide6.QtCore import QModelIndex, Qt, QSortFilterProxyModel
+from PySide6.QtCore import QModelIndex, Qt, QSortFilterProxyModel, QAbstractItemModel
 from PySide6.QtWidgets import QHeaderView, QMenu
 
 from ...core.Observer import Subscriber
 from ...core.WidgetManager import WidgetManager
 from ...models.datatable_model import DataType, SortOrder
+
+
+class PaginationProxyModel(QSortFilterProxyModel):
+    """Proxy model for pagination"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._page = 1
+        self._rows_per_page = 10
+
+    def setPagination(self, page: int, rows_per_page: int):
+        """Set pagination parameters"""
+        self._page = page
+        self._rows_per_page = rows_per_page
+        self.invalidateFilter()
+
+    def filterAcceptsRow(self, source_row: int, source_parent: QModelIndex) -> bool:
+        """Filter rows based on pagination"""
+        start = (self._page - 1) * self._rows_per_page
+        end = start + self._rows_per_page
+        return start <= source_row < end
 
 
 class DataTableProxyModel(QSortFilterProxyModel):
@@ -32,9 +53,6 @@ class DataTableProxyModel(QSortFilterProxyModel):
         super().__init__(parent)
         self._search_term = ''
         self._data_type_filter = None
-        self._pagination_start = 0
-        self._pagination_end = 0
-        self._pagination_enabled = False
 
     def setSearchTerm(self, term):
         """Set Search term"""
@@ -46,25 +64,8 @@ class DataTableProxyModel(QSortFilterProxyModel):
         self._data_type_filter = data_type
         self.invalidateFilter()
 
-    def setPaginationRange(self, start, end):
-        """Set the range of the page"""
-        self._pagination_start = start
-        self._pagination_end = end
-        self._pagination_enabled = True
-        self.invalidateFilter()
-
-    def disablePagination(self):
-        """Turn off Pagination"""
-        self._pagination_enabled = False
-        self.invalidateFilter()
-
     def filterAcceptsRow(self, source_row, source_parent):
         """Check if a row should be displayed"""
-        # Kiểm tra phân trang
-        if self._pagination_enabled:
-            if source_row < self._pagination_start or source_row >= self._pagination_end:
-                return False
-
         # Kiểm tra bộ lọc loại dữ liệu
         model = self.sourceModel()
         if self._data_type_filter is not None:
@@ -195,17 +196,18 @@ class DataTableHandler(Subscriber):
 
         # Apply filtering by setting visible rows on the model
         # Hoặc sử dụng proxy model nếu được triển khai
-        if hasattr(self.table._proxyModel, 'setSearchTerm') and hasattr(self.table._proxyModel, 'setDataTypeFilter'):
+        if hasattr(self.table, '_proxyModel') and hasattr(self.table._proxyModel, 'setSearchTerm') and hasattr(self.table._proxyModel, 'setDataTypeFilter'):
             # Sử dụng proxy model nếu có các phương thức phù hợp
             self.table._proxyModel.setSearchTerm(search_term)
             self.table._proxyModel.setDataTypeFilter(data_type)
         else:
-            # Hoặc áp dụng bộ lọc thông qua các phương thức có sẵn
-            if hasattr(self.table, 'applyFilters'):
-                self.table.applyFilters(filtered_rows)
-            elif hasattr(self.table, '_applySearch'):
-                self.table._applySearch(search_term)
-                # Không có cách trực tiếp để áp dụng bộ lọc loại
+            # TODO: is recursive-cicurla call ?
+            # if hasattr(self.table, 'applyFilters'):
+            #     self.table.applyFilters(filtered_rows)
+            # elif hasattr(self.table, '_applySearch'):
+            #     self.table._applySearch(search_term)
+            # DO NOT REMOVE above comment
+            pass
 
         # Reset page to 1 when filter changes
         self.table._page = 1
@@ -287,7 +289,6 @@ class DataTableHandler(Subscriber):
         sort_order = header.sortIndicatorOrder()
 
         self.table.sortChanged.emit(column_key, SortOrder.ASCENDING if sort_order == 0 else SortOrder.DESCENDING)
-
     def on_table_row_clicked(self, index: QModelIndex, data: Dict[str, Any] = None):
         """Handle table row clicked
 
@@ -295,20 +296,55 @@ class DataTableHandler(Subscriber):
             index: Model index
             data: Event data
         """
-        import inspect
-
-        print('on_table_row_clicked', inspect.getframeinfo(inspect.currentframe()))
-        breakpoint()
         if not index.isValid():
             return
+        
+        # Map from view index to source model index
+        # from core.Logging import logger
+        # logger.debug('on_table_row_clicked')
+        # logger.opt(capture=True).debug('current_index', current_index=index)
+        current_index = index
+        model = self.table.tableView.model()
+        
+        # Traverse down the proxy chain until we reach the base model
+        while isinstance(model, QSortFilterProxyModel):
+            # current_index = model.mapToSource(current_index)
+            model = model.sourceModel()
+        row = index.row()
+        # Check if it's the expand/collapse column and the first column
+        if index.column() == 0 and self.table._model._row_collapsing_enabled:
+            if self.table._model.isRowCollapsable(row):
+                self.table._model.toggleRowExpanded(row)
+                return
+        
+        if row > -1:
+            # Emit signal
+            self.table.rowSelected.emit(row, self.table._model._data[row])
+    
+    def on_table_row_clicked_need_fix(self, index: QModelIndex, data: Dict[str, Any] = None):
+        """Handle table row clicked
 
-        # Map proxy index to source index
-        if hasattr(self.table, '_proxyModel') and self.table._proxyModel:
-            source_index = self.table._proxyModel.mapToSource(index)
-            row = source_index.row()
-        else:
-            row = index.row()
-
+        Args:
+            index: Model index
+            data: Event data
+        """
+        if not index.isValid():
+            return
+        
+        # Map from view index to source model index
+        from core.Logging import logger
+        logger.debug('on_table_row_clicked')
+        logger.opt(capture=True).debug('current_index', current_index=index)
+        current_index = index
+        model = self.table.tableView.model()
+        
+        # Traverse down the proxy chain until we reach the base model
+        while isinstance(model, QSortFilterProxyModel):
+            current_index = model.mapToSource(current_index)
+            model = model.sourceModel()
+            logger.opt(capture=True).debug('current_index reassigned', model=model, modelType=type(model), current_index=current_index)
+        row = current_index.row()
+        logger.opt(capture=True).debug('row final', row=row)
         # Check if it's the expand/collapse column and the first column
         if index.column() == 0 and self.table._model._row_collapsing_enabled:
             if self.table._model.isRowCollapsable(row):

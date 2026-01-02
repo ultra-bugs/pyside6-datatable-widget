@@ -18,13 +18,26 @@ from typing import Any, Callable, Dict, List, Optional, Self, Tuple, Union
 
 from PySide6.QtCore import QPoint, Qt, Signal
 from PySide6.QtGui import QAction
-from PySide6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QPushButton, QSpinBox, QStyle, QTableView, QVBoxLayout
+from PySide6.QtWidgets import (
+    QComboBox,
+    QFrame,
+    QHBoxLayout,
+    QHeaderView,
+    QLabel,
+    QLineEdit,
+    QMenu,
+    QPushButton,
+    QSpinBox,
+    QStyle,
+    QTableView,
+    QVBoxLayout,
+)
 
 from ..core.BaseController import BaseController
 from ..models.datatable_model import DataTableModel, DataType, SortOrder
 from ..models.delegates import BooleanDelegate, DateDelegate, NumericDelegate, ProgressDelegate
 from ..ui.untitled import Ui_DataTable
-from ..widgets.handlers.DataTableHandler import DataTableProxyModel
+from ..widgets.handlers.DataTableHandler import DataTableProxyModel, PaginationProxyModel
 
 
 class DataTable(Ui_DataTable, BaseController):
@@ -50,6 +63,9 @@ class DataTable(Ui_DataTable, BaseController):
         'table_header_clicked': ['tableView.verticalHeader', 'sectionClicked'],
         'table_row_clicked': ['tableView', 'clicked'],
         'column_visibility_changed': ['columnVisibilityButton', 'clicked'],
+        'select_all': ['selectAllButton', 'clicked'],
+        'deselect_all': ['deselectAllButton', 'clicked'],
+        'select_inverse': ['selectInverseButton', 'clicked'],
     }
 
     def __init__(self, parent=None):
@@ -59,7 +75,11 @@ class DataTable(Ui_DataTable, BaseController):
         self._proxyModel.setSourceModel(self._model)
         self._proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self._proxyModel.setDynamicSortFilter(True)
-        self.tableView.setModel(self._proxyModel)
+
+        self._paginationModel = PaginationProxyModel(self)
+        self._paginationModel.setSourceModel(self._proxyModel)
+
+        self.tableView.setModel(self._paginationModel)
 
         # Pagination state
         self._page = 1
@@ -68,7 +88,8 @@ class DataTable(Ui_DataTable, BaseController):
         self._connectModelSignals()._uiBehaviorSetup()
         # Initialize pagination
         self.rowsPerPageCombo.clear()
-        self.rowsPerPageCombo.addItems(['1', '5', '10', '25', '50', '100'])
+        self.rowsPerPageCombo.addItems(['10', '25', '50', '100'])
+        self.rowsPerPageCombo.setCurrentText('25')
         self._updatePagination()
         self.pageSpinBox.setVisible(False)
 
@@ -87,13 +108,54 @@ class DataTable(Ui_DataTable, BaseController):
         # Configure the view
         self.tableView.setSortingEnabled(True)
         self.tableView.setSelectionBehavior(QTableView.SelectRows)
-        self.tableView.setSelectionMode(QTableView.SingleSelection)
+        self.tableView.setSelectionMode(QTableView.ExtendedSelection)  # Enable multi-selection
         self.tableView.verticalHeader().setVisible(False)
         self.tableView.horizontalHeader().setSectionsMovable(True)
         self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.tableView.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tableView.horizontalHeader().customContextMenuRequested.connect(self._showHeaderContextMenu)
+        self.tableView.horizontalHeader().customContextMenuRequested.connect(
+            self._showHeaderContextMenu
+        )
+
+        # Add selection buttons to toolbar
+        self._addSelectionButtons()
+
         return self
+
+    def _addSelectionButtons(self):
+        """Add selection buttons to the toolbar"""
+        self.selectAllButton = QPushButton('All')
+        self.selectAllButton.setToolTip('Select All')
+        self.selectAllButton.setMaximumWidth(40)
+
+        self.deselectAllButton = QPushButton('None')
+        self.deselectAllButton.setToolTip('Deselect All')
+        self.deselectAllButton.setMaximumWidth(40)
+
+        self.selectInverseButton = QPushButton('Inv')
+        self.selectInverseButton.setToolTip('Invert Selection')
+        self.selectInverseButton.setMaximumWidth(40)
+
+        # Insert buttons into the top toolbar layout
+        self.top_toolbar.insertWidget(1, self.selectAllButton)
+        self.top_toolbar.insertWidget(2, self.deselectAllButton)
+        self.top_toolbar.insertWidget(3, self.selectInverseButton)
+
+        # Connect signals manually
+        self.selectAllButton.clicked.connect(self.tableView.selectAll)
+        self.deselectAllButton.clicked.connect(self.tableView.clearSelection)
+        self.selectInverseButton.clicked.connect(self._invertSelection)
+
+    def _invertSelection(self):
+        """Invert current selection"""
+        rows = self._paginationModel.rowCount()
+        selection_model = self.tableView.selectionModel()
+
+        for row in range(rows):
+            index = self._paginationModel.index(row, 0)
+            selection_model.select(
+                index, Qt.ItemSelectionModel.Toggle | Qt.ItemSelectionModel.Rows
+            )
 
     # Public API
     def setModel(self, model: DataTableModel) -> Self:
@@ -104,6 +166,7 @@ class DataTable(Ui_DataTable, BaseController):
         """
         self._model = model
         self._proxyModel.setSourceModel(model)
+        self._paginationModel.setSourceModel(self._proxyModel)
         # Connect model signals
         self._model.modelReset.connect(self._onModelReset)
         self._model.rowExpandedCollapsed.connect(self._onRowExpandedCollapsed)
@@ -114,7 +177,9 @@ class DataTable(Ui_DataTable, BaseController):
         return self
 
     def setUiSelectionType(
-        self, mode: Union[QTableView.SelectionMode, int] = QTableView.SingleSelection, behavior: Union[QTableView.SelectionBehavior, int] = QTableView.SelectRows
+        self,
+        mode: Union[QTableView.SelectionMode, int] = QTableView.ExtendedSelection,
+        behavior: Union[QTableView.SelectionBehavior, int] = QTableView.SelectRows,
     ) -> Self:
         """Set the selection mode and behavior for the table view.
 
@@ -234,12 +299,12 @@ class DataTable(Ui_DataTable, BaseController):
         Args:
             rows: Number of rows per page
         """
-        if rows not in [1, 5, 10, 25, 50, 100]:
-            rows = 1
+        if rows not in [10, 25, 50, 100]:
+            rows = 25
 
         self._rows_per_page = rows
         index = self.rowsPerPageCombo.findText(str(rows))
-        if index == -1:
+        if index != -1:
             self.rowsPerPageCombo.setCurrentIndex(index)
 
         self._updatePagination()
@@ -254,18 +319,33 @@ class DataTable(Ui_DataTable, BaseController):
         return self._model._data
 
     def getSelectedRow(self) -> Optional[Dict[str, Any]]:
-        """Get selected row data
+        """Get selected row data (first selected if multiple)
 
         Returns:
             Selected row data or None
         """
-        indexes = self.tableView.selectedIndexes()
-        if not indexes:
-            return None
-        proxy_row = indexes[0].row()
-        model_row = self._proxyModel.mapToSource(indexes[0]).row()
+        rows = self.getSelectedRows()
+        return rows[0] if rows else None
 
-        return self._model._data[model_row]
+    def getSelectedRows(self) -> List[Dict[str, Any]]:
+        """Get all selected rows data
+
+        Returns:
+            List of selected row data dictionaries
+        """
+        indexes = self.tableView.selectionModel().selectedRows()
+        if not indexes:
+            return []
+
+        selected_data = []
+        for index in indexes:
+            pagination_index = index
+            filter_index = self._paginationModel.mapToSource(pagination_index)
+            source_index = self._proxyModel.mapToSource(filter_index)
+            model_row = source_index.row()
+            selected_data.append(self._model._data[model_row])
+
+        return selected_data
 
     def getAggregateValue(self, column_key: str, agg_type: str) -> Any:
         """Get aggregate value for column
@@ -321,10 +401,16 @@ class DataTable(Ui_DataTable, BaseController):
             if data_type == DataType.NUMERIC:
                 if show_without_decimals:
                     self._model.setFormattingFunction(
-                        col_key, lambda n: str(int(n)) if isinstance(n, (int, float)) and float(n).is_integer() else (f'{n:,.2f}' if isinstance(n, (int, float)) else str(n))
+                        col_key,
+                        lambda n: str(int(n))
+                        if isinstance(n, (int, float)) and float(n).is_integer()
+                        else (f'{n:,.2f}' if isinstance(n, (int, float)) else str(n)),
                     )
                 else:
-                    self._model.setFormattingFunction(col_key, lambda n: f'{n:,.2f}' if isinstance(n, (int, float)) else str(n))
+                    self._model.setFormattingFunction(
+                        col_key,
+                        lambda n: f'{n:,.2f}' if isinstance(n, (int, float)) else str(n),
+                    )
         return self
 
     def setFormattingFunction(self, column_key: str, func: Callable) -> Self:
@@ -391,7 +477,8 @@ class DataTable(Ui_DataTable, BaseController):
 
     def _updatePagination(self) -> None:
         """Update pagination controls"""
-        total_rows = len(self._model._data)
+        # Use filtered row count
+        total_rows = self._proxyModel.rowCount()
 
         if total_rows == 0:
             self._total_pages = 1
@@ -450,18 +537,21 @@ class DataTable(Ui_DataTable, BaseController):
 
     def _updateVisibleRows(self) -> None:
         """Update which rows are visible based on pagination"""
-        if not self._model._data:
+        total_filtered = self._proxyModel.rowCount()
+
+        if total_filtered == 0:
             self.totalEntriesLabel.setText('Showing 0 to 0 of 0 entries')
+            self._paginationModel.setPagination(1, self._rows_per_page)
             return
 
         start = (self._page - 1) * self._rows_per_page
-        end = min(start + self._rows_per_page, len(self._model._data))
+        end = min(start + self._rows_per_page, total_filtered)
 
-        self.totalEntriesLabel.setText(f'Showing {start + 1} to {end} of {len(self._model._data)} entries')
+        self.totalEntriesLabel.setText(
+            f'Showing {start + 1} to {end} of {total_filtered} entries'
+        )
 
-        # Here we would filter rows based on pagination
-        # but because we're using a QTableView and model, we don't need to hide rows
-        # We could implement custom model/view to handle pagination
+        self._paginationModel.setPagination(self._page, self._rows_per_page)
 
     def _applySearch(self, term: str) -> None:
         """Apply search filter
@@ -511,7 +601,9 @@ class DataTable(Ui_DataTable, BaseController):
             self._header_menu.addAction(sort_asc_action)
 
             sort_desc_action = QAction(f'Sort {column_name} Descending', self._header_menu)
-            sort_desc_action.triggered.connect(lambda: self.sort(column_key, SortOrder.DESCENDING))
+            sort_desc_action.triggered.connect(
+                lambda: self.sort(column_key, SortOrder.DESCENDING)
+            )
             self._header_menu.addAction(sort_desc_action)
 
             self._header_menu.addSeparator()
@@ -523,7 +615,9 @@ class DataTable(Ui_DataTable, BaseController):
             action = QAction(header_text, vis_menu)
             action.setCheckable(True)
             action.setChecked(key in self._model._visible_columns)
-            action.triggered.connect(lambda checked, k=key: self._toggleColumnVisibility(k, checked))
+            action.triggered.connect(
+                lambda checked, k=key: self._toggleColumnVisibility(k, checked)
+            )
             vis_menu.addAction(action)
 
         global_pos = header.mapToGlobal(pos)

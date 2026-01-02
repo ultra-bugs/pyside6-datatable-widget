@@ -19,10 +19,22 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <property name="styleSheet">
-   <string notr="true"/>
-  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>8</number>
+   </property>
+   <property name="leftMargin">
+    <number>1</number>
+   </property>
+   <property name="topMargin">
+    <number>1</number>
+   </property>
+   <property name="rightMargin">
+    <number>1</number>
+   </property>
+   <property name="bottomMargin">
+    <number>1</number>
+   </property>
    <item>
     <layout class="QHBoxLayout" name="top_toolbar">
      <item>
@@ -140,6 +152,9 @@
    </item>
    <item>
     <widget class="DataTableView" name="tableView">
+     <property name="editTriggers">
+      <set>QAbstractItemView::EditTrigger::DoubleClicked</set>
+     </property>
      <property name="alternatingRowColors">
       <bool>true</bool>
      </property>
@@ -286,9 +301,6 @@
             <height>16777215</height>
            </size>
           </property>
-          <property name="styleSheet">
-           <string notr="true">background-color: #007acc;</string>
-          </property>
           <property name="text">
            <string>1</string>
           </property>
@@ -309,15 +321,6 @@
         </item>
         <item>
          <widget class="QPushButton" name="pushButton">
-          <property name="styleSheet">
-           <string notr="true">QPushButton:hover {
-    background-color: #3e3e42;
-}
-
-QPushButton:pressed {
-    background-color: #007acc;
-}</string>
-          </property>
           <property name="text">
            <string>...</string>
           </property>
