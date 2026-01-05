@@ -18,8 +18,7 @@ from typing import Any, Optional
 from PySide6.QtCore import QModelIndex, Qt, QDateTime, QSize, QRectF, QByteArray, QPoint
 from PySide6.QtGui import QColor, QLinearGradient, QPainter, QBrush, QPen, QPixmap, QPainterPath, QPalette
 from PySide6.QtSvg import QSvgRenderer
-from PySide6.QtWidgets import (QStyledItemDelegate, QWidget, QStyleOptionViewItem, QDoubleSpinBox, 
-                               QDateEdit, QCheckBox, QLineEdit, QTextEdit, QProgressBar, QStyle, QApplication)
+from PySide6.QtWidgets import QStyledItemDelegate, QWidget, QStyleOptionViewItem, QDoubleSpinBox, QDateEdit, QCheckBox, QLineEdit, QTextEdit, QProgressBar, QStyle, QApplication
 
 
 class CellDelegate(QStyledItemDelegate):
@@ -261,11 +260,12 @@ class ProgressBarDelegate(CellDelegate):
     """
     Advanced Delegate for progress bar with custom colors and gradients.
     """
+
     def __init__(self, parent=None, color=None, use_gradient=False):
         super().__init__(parent)
         self.base_color = color
         self.use_gradient = use_gradient
-        self.ranges = [] # List of (min_pct, max_pct, color)
+        self.ranges = []  # List of (min_pct, max_pct, color)
 
     def get_color(self) -> QColor:
         if self.base_color:
@@ -274,7 +274,7 @@ class ProgressBarDelegate(CellDelegate):
         app = QApplication.instance()
         if app:
             return app.palette().color(QPalette.Highlight)
-        return QColor("#3b82f6") # Fallback
+        return QColor('#3b82f6')  # Fallback
 
     def set_base_color(self, color: QColor):
         self.base_color = color
@@ -287,7 +287,7 @@ class ProgressBarDelegate(CellDelegate):
         for start, end, _ in self.ranges:
             # Check if new range overlaps with existing
             if max_pct > start and min_pct < end:
-                 raise ValueError(f"Range ({min_pct}, {max_pct}) overlaps with existing range ({start}, {end})")
+                raise ValueError(f'Range ({min_pct}, {max_pct}) overlaps with existing range ({start}, {end})')
         self.ranges.append((min_pct, max_pct, QColor(color)))
         self.ranges.sort(key=lambda x: x[0])
 
@@ -295,21 +295,21 @@ class ProgressBarDelegate(CellDelegate):
         progress = index.data(Qt.DisplayRole)
         if progress is None:
             return
-            
+
         try:
             progress = float(progress)
         except (ValueError, TypeError):
             return
 
         progress = max(0, min(100, progress))
-        
+
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
-        
+
         # Draw background
         rect = QRectF(option.rect)
-        rect.adjust(4, 4, -4, -4) # Padding
-        
+        rect.adjust(4, 4, -4, -4)  # Padding
+
         # Track
         track_color = QColor(200, 200, 200, 50)
         painter.setPen(Qt.NoPen)
@@ -318,39 +318,39 @@ class ProgressBarDelegate(CellDelegate):
 
         # Determine bar color
         bar_color = self.get_color()
-        
+
         # Check ranges
         for start, end, color in self.ranges:
             if start <= progress <= end:
                 bar_color = color
                 break
-        
+
         # Draw bar
         if progress > 0:
             width = rect.width() * (progress / 100.0)
             bar_rect = QRectF(rect.x(), rect.y(), width, rect.height())
-            
+
             if self.use_gradient:
                 gradient = QLinearGradient(bar_rect.topLeft(), bar_rect.topRight())
                 c1 = QColor(bar_color)
-                c1.setAlpha(0) # Fade from transparent (0% opacity)
+                c1.setAlpha(0)  # Fade from transparent (0% opacity)
                 c2 = QColor(bar_color)
-                c2.setAlpha(255) # To full color (100% opacity)
+                c2.setAlpha(255)  # To full color (100% opacity)
                 gradient.setColorAt(0, c1)
                 gradient.setColorAt(1, c2)
                 painter.setBrush(gradient)
             else:
                 painter.setBrush(bar_color)
-                
+
             painter.drawRoundedRect(bar_rect, 4, 4)
 
         # Draw text
-        text = f"{int(progress)}%"
+        text = f'{int(progress)}%'
         painter.setPen(option.palette.text().color())
         painter.drawText(rect, Qt.AlignCenter, text)
 
         painter.restore()
-        
+
     def createEditor(self, parent: QWidget, option: QStyleOptionViewItem, index: QModelIndex) -> QWidget:
         editor = QDoubleSpinBox(parent)
         editor.setMinimum(0)
@@ -373,18 +373,19 @@ class IconBooleanDelegate(BooleanDelegate):
     """
     Delegate for boolean values using SVG icons.
     """
+
     YES_SVG = """<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
  <path d="M7.5 12L10.5 15L16.5 9M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
  </svg>"""
-    
+
     NO_SVG = """<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
  <path d="M15 9L9 15M9 9L15 15M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
  </svg>"""
 
     def __init__(self, parent=None, yes_color=None, no_color=None):
         super().__init__(parent)
-        self.yes_color = yes_color if yes_color else QColor("#22c55e") # Green
-        self.no_color = no_color if no_color else QColor("#ef4444") # Red
+        self.yes_color = yes_color if yes_color else QColor('#22c55e')  # Green
+        self.no_color = no_color if no_color else QColor('#ef4444')  # Red
         self.renderer = QSvgRenderer()
 
     def set_yes_color(self, color: QColor):
@@ -395,32 +396,33 @@ class IconBooleanDelegate(BooleanDelegate):
 
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         value = index.data(Qt.EditRole)
-        
+
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
-        
+
         # Determine state
         is_yes = bool(value)
-        
+
         # Set color
         color = self.yes_color if is_yes else self.no_color
         svg_content = self.YES_SVG if is_yes else self.NO_SVG
-        
+
         # Replace currentColor with actual color
         color_hex = color.name()
-        svg_content = svg_content.replace("currentColor", color_hex)
-        
+        svg_content = svg_content.replace('currentColor', color_hex)
+
         self.renderer.load(QByteArray(svg_content.encode('utf-8')))
-        
+
         # Calculate rect to center the icon
         # Keep aspect ratio 1:1
-        size = min(option.rect.width(), option.rect.height()) - 8 # Padding
-        if size < 0: size = 0
-        
+        size = min(option.rect.width(), option.rect.height()) - 8  # Padding
+        if size < 0:
+            size = 0
+
         x = option.rect.x() + (option.rect.width() - size) / 2
         y = option.rect.y() + (option.rect.height() - size) / 2
         target_rect = QRectF(x, y, size, size)
-        
+
         self.renderer.render(painter, target_rect)
-        
+
         painter.restore()

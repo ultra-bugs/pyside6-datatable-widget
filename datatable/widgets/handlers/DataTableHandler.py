@@ -289,7 +289,7 @@ class DataTableHandler(Subscriber):
         sort_order = header.sortIndicatorOrder()
 
         self.table.sortChanged.emit(column_key, SortOrder.ASCENDING if sort_order == 0 else SortOrder.DESCENDING)
-    
+
     def on_table_row_clicked(self, index: QModelIndex, data: Dict[str, Any] = None):
         """Handle table row clicked
 
@@ -304,7 +304,7 @@ class DataTableHandler(Subscriber):
         pagination_index = index
         filter_index = self.table._paginationModel.mapToSource(pagination_index)
         source_index = self.table._proxyModel.mapToSource(filter_index)
-        
+
         source_row = source_index.row()
 
         # Check if it's the expand/collapse column and the first column
@@ -312,7 +312,7 @@ class DataTableHandler(Subscriber):
             if self.table._model.isRowCollapsable(source_row):
                 self.table._model.toggleRowExpanded(source_row)
                 return
-        
+
         if source_row > -1:
             # Emit signal with the correct source row and data
             self.table.rowSelected.emit(source_row, self.table._model._data[source_row])

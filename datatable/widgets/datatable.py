@@ -18,25 +18,11 @@ from typing import Any, Callable, Dict, List, Optional, Self, Tuple, Union
 
 from PySide6.QtCore import QPoint, Qt, Signal, QTimer, QItemSelectionModel
 from PySide6.QtGui import QAction, QColor
-from PySide6.QtWidgets import (
-    QComboBox,
-    QFrame,
-    QHBoxLayout,
-    QHeaderView,
-    QLabel,
-    QLineEdit,
-    QMenu,
-    QPushButton,
-    QSpinBox,
-    QStyle,
-    QTableView,
-    QVBoxLayout,
-)
+from PySide6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QPushButton, QSpinBox, QStyle, QTableView, QVBoxLayout
 
 from ..core.BaseController import BaseController
 from ..models.datatable_model import DataTableModel, DataType, SortOrder
-from ..models.delegates import (BooleanDelegate, DateDelegate, NumericDelegate, ProgressDelegate, 
-                                ProgressBarDelegate, IconBooleanDelegate)
+from ..models.delegates import BooleanDelegate, DateDelegate, NumericDelegate, ProgressDelegate, ProgressBarDelegate, IconBooleanDelegate
 from ..ui.untitled import Ui_DataTable
 from ..widgets.handlers.DataTableHandler import DataTableProxyModel, PaginationProxyModel
 
@@ -86,7 +72,7 @@ class DataTable(Ui_DataTable, BaseController):
         self._page = 1
         self._rows_per_page = 10
         self._total_pages = 1
-        
+
         # Column configurations for delegates
         self._column_configurations: Dict[str, Dict[str, Any]] = {}
 
@@ -118,9 +104,7 @@ class DataTable(Ui_DataTable, BaseController):
         self.tableView.horizontalHeader().setSectionsMovable(True)
         self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.tableView.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tableView.horizontalHeader().customContextMenuRequested.connect(
-            self._showHeaderContextMenu
-        )
+        self.tableView.horizontalHeader().customContextMenuRequested.connect(self._showHeaderContextMenu)
         return self
 
     def selectAll(self) -> Self:
@@ -141,18 +125,13 @@ class DataTable(Ui_DataTable, BaseController):
 
         for row in range(rows):
             index = self._paginationModel.index(row, 0)
-            selection_model.select(
-                index, QItemSelectionModel.Toggle | QItemSelectionModel.Rows
-            )
+            selection_model.select(index, QItemSelectionModel.Toggle | QItemSelectionModel.Rows)
         return self
+
     def _save_state(self):
         """Save the current UI state of the table."""
         selected_ids = {row.get('id') for row in self.getSelectedRows()}
-        state = {
-            'v_scroll': self.tableView.verticalScrollBar().value(),
-            'h_scroll': self.tableView.horizontalScrollBar().value(),
-            'selected_ids': selected_ids,
-        }
+        state = {'v_scroll': self.tableView.verticalScrollBar().value(), 'h_scroll': self.tableView.horizontalScrollBar().value(), 'selected_ids': selected_ids}
         return state
 
     def _restore_state(self, state):
@@ -165,14 +144,14 @@ class DataTable(Ui_DataTable, BaseController):
         if selected_ids:
             selection_model: QItemSelectionModel = self.tableView.selectionModel()
             selection_model.clearSelection()
-            
+
             # Iterate through the visible rows in the proxy model
             for row in range(self._paginationModel.rowCount()):
                 # Map view index to source model index
                 pagination_index = self._paginationModel.index(row, 0)
                 filter_index = self._paginationModel.mapToSource(pagination_index)
                 source_index = self._proxyModel.mapToSource(filter_index)
-                
+
                 # Get the unique ID from the source model
                 row_data = self._model.getRowData(source_index.row())
                 if row_data and row_data.get('id') in selected_ids:
@@ -203,9 +182,7 @@ class DataTable(Ui_DataTable, BaseController):
         return self
 
     def setUiSelectionType(
-        self,
-        mode: Union[QTableView.SelectionMode, int] = QTableView.ExtendedSelection,
-        behavior: Union[QTableView.SelectionBehavior, int] = QTableView.SelectRows,
+        self, mode: Union[QTableView.SelectionMode, int] = QTableView.ExtendedSelection, behavior: Union[QTableView.SelectionBehavior, int] = QTableView.SelectRows
     ) -> Self:
         """Set the selection mode and behavior for the table view.
 
@@ -429,16 +406,10 @@ class DataTable(Ui_DataTable, BaseController):
             if data_type == DataType.NUMERIC:
                 if show_without_decimals:
                     self._model.setFormattingFunction(
-                        col_key,
-                        lambda n: str(int(n))
-                        if isinstance(n, (int, float)) and float(n).is_integer()
-                        else (f'{n:,.2f}' if isinstance(n, (int, float)) else str(n)),
+                        col_key, lambda n: str(int(n)) if isinstance(n, (int, float)) and float(n).is_integer() else (f'{n:,.2f}' if isinstance(n, (int, float)) else str(n))
                     )
                 else:
-                    self._model.setFormattingFunction(
-                        col_key,
-                        lambda n: f'{n:,.2f}' if isinstance(n, (int, float)) else str(n),
-                    )
+                    self._model.setFormattingFunction(col_key, lambda n: f'{n:,.2f}' if isinstance(n, (int, float)) else str(n))
         return self
 
     def setFormattingFunction(self, column_key: str, func: Callable) -> Self:
@@ -457,7 +428,7 @@ class DataTable(Ui_DataTable, BaseController):
         if column_key not in self._column_configurations:
             self._column_configurations[column_key] = {}
         self._column_configurations[column_key]['base_color'] = color
-        
+
         # Update existing delegate if visible
         if column_key in self._model._visible_columns:
             col_index = self._model._visible_columns.index(column_key)
@@ -471,7 +442,7 @@ class DataTable(Ui_DataTable, BaseController):
         if column_key not in self._column_configurations:
             self._column_configurations[column_key] = {}
         self._column_configurations[column_key]['gradient'] = enabled
-        
+
         if column_key in self._model._visible_columns:
             col_index = self._model._visible_columns.index(column_key)
             delegate = self.tableView.itemDelegateForColumn(col_index)
@@ -486,7 +457,7 @@ class DataTable(Ui_DataTable, BaseController):
         if 'ranges' not in self._column_configurations[column_key]:
             self._column_configurations[column_key]['ranges'] = []
         self._column_configurations[column_key]['ranges'].append((min_pct, max_pct, color))
-        
+
         if column_key in self._model._visible_columns:
             col_index = self._model._visible_columns.index(column_key)
             delegate = self.tableView.itemDelegateForColumn(col_index)
@@ -500,7 +471,7 @@ class DataTable(Ui_DataTable, BaseController):
             self._column_configurations[column_key] = {}
         self._column_configurations[column_key]['yes_color'] = yes_color
         self._column_configurations[column_key]['no_color'] = no_color
-        
+
         if column_key in self._model._visible_columns:
             col_index = self._model._visible_columns.index(column_key)
             delegate = self.tableView.itemDelegateForColumn(col_index)
@@ -535,7 +506,7 @@ class DataTable(Ui_DataTable, BaseController):
         for i, col_key in enumerate(self._model._visible_columns):
             data_type = self._model._column_types.get(col_key)
             config = self._column_configurations.get(col_key, {})
-            
+
             if data_type == DataType.NUMERIC:
                 delegate = NumericDelegate(self.tableView)
                 if self._show_integers_without_decimals:
@@ -653,9 +624,7 @@ class DataTable(Ui_DataTable, BaseController):
         start = (self._page - 1) * self._rows_per_page
         end = min(start + self._rows_per_page, total_filtered)
 
-        self.displayingEntriesLbl.setText(
-            f'{start + 1} - {end}'
-        )
+        self.displayingEntriesLbl.setText(f'{start + 1} - {end}')
         self.totalEntriesLbl.setText(str(total_filtered))
         self._paginationModel.setPagination(self._page, self._rows_per_page)
 
@@ -707,9 +676,7 @@ class DataTable(Ui_DataTable, BaseController):
             self._header_menu.addAction(sort_asc_action)
 
             sort_desc_action = QAction(f'Sort {column_name} Descending', self._header_menu)
-            sort_desc_action.triggered.connect(
-                lambda: self.sort(column_key, SortOrder.DESCENDING)
-            )
+            sort_desc_action.triggered.connect(lambda: self.sort(column_key, SortOrder.DESCENDING))
             self._header_menu.addAction(sort_desc_action)
 
             self._header_menu.addSeparator()
@@ -721,9 +688,7 @@ class DataTable(Ui_DataTable, BaseController):
             action = QAction(header_text, vis_menu)
             action.setCheckable(True)
             action.setChecked(key in self._model._visible_columns)
-            action.triggered.connect(
-                lambda checked, k=key: self._toggleColumnVisibility(k, checked)
-            )
+            action.triggered.connect(lambda checked, k=key: self._toggleColumnVisibility(k, checked))
             vis_menu.addAction(action)
 
         global_pos = header.mapToGlobal(pos)

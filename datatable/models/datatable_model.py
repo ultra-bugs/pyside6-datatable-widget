@@ -28,8 +28,8 @@ class DataType(Enum):
     BOOLEAN = auto()
     PROGRESS = auto()
     CUSTOM = auto()
-    PROGRESS_BAR = auto() # New type for ProgressBarDelegate
-    ICON_BOOLEAN = auto() # New type for IconBooleanDelegate
+    PROGRESS_BAR = auto()  # New type for ProgressBarDelegate
+    ICON_BOOLEAN = auto()  # New type for IconBooleanDelegate
 
 
 class SortOrder(Enum):
