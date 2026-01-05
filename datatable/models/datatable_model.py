@@ -166,7 +166,6 @@ class DataTableModel(QAbstractTableModel):
         self._expanded_rows = {}
         self._child_rows = {}
         self.endResetModel()
-        self.modelReset.emit()
 
     def setColumns(self, columns: List[Tuple[str, str, DataType]]) -> None:
         """Set the columns for the model
@@ -203,7 +202,6 @@ class DataTableModel(QAbstractTableModel):
             self._setupDefaultSortFunctions(key, data_type)
 
         self.endResetModel()
-        self.modelReset.emit()
 
     def setFormattingFunction(self, column_key: str, func: Callable) -> None:
         """Set formatting function for a column
@@ -260,7 +258,6 @@ class DataTableModel(QAbstractTableModel):
         self._headers = new_headers
 
         self.endResetModel()
-        self.modelReset.emit()
 
     def setSearchFunction(self, column_key: str, func: Callable) -> None:
         """Set search function for a column
