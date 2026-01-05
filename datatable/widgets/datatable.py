@@ -17,7 +17,7 @@
 from typing import Any, Callable, Dict, List, Optional, Self, Tuple, Union
 
 from PySide6.QtCore import QPoint, Qt, Signal, QTimer, QItemSelectionModel
-from PySide6.QtGui import QAction
+from PySide6.QtGui import QAction, QColor
 from PySide6.QtWidgets import (
     QComboBox,
     QFrame,
@@ -35,7 +35,8 @@ from PySide6.QtWidgets import (
 
 from ..core.BaseController import BaseController
 from ..models.datatable_model import DataTableModel, DataType, SortOrder
-from ..models.delegates import BooleanDelegate, DateDelegate, NumericDelegate, ProgressDelegate
+from ..models.delegates import (BooleanDelegate, DateDelegate, NumericDelegate, ProgressDelegate, 
+                                ProgressBarDelegate, IconBooleanDelegate)
 from ..ui.untitled import Ui_DataTable
 from ..widgets.handlers.DataTableHandler import DataTableProxyModel, PaginationProxyModel
 
@@ -63,9 +64,9 @@ class DataTable(Ui_DataTable, BaseController):
         'table_header_clicked': ['tableView.verticalHeader', 'sectionClicked'],
         'table_row_clicked': ['tableView', 'clicked'],
         'column_visibility_changed': ['columnVisibilityButton', 'clicked'],
-        'select_all': ['selectAllButton', 'clicked'],
-        'deselect_all': ['deselectAllButton', 'clicked'],
-        'select_inverse': ['selectInverseButton', 'clicked'],
+        # 'select_all': ['selectAllButton', 'clicked'],
+        # 'deselect_all': ['deselectAllButton', 'clicked'],
+        # 'select_inverse': ['selectInverseButton', 'clicked'],
     }
 
     def __init__(self, parent=None):
@@ -85,6 +86,10 @@ class DataTable(Ui_DataTable, BaseController):
         self._page = 1
         self._rows_per_page = 10
         self._total_pages = 1
+        
+        # Column configurations for delegates
+        self._column_configurations: Dict[str, Dict[str, Any]] = {}
+
         self._connectModelSignals()._uiBehaviorSetup()
         # Initialize pagination
         self.rowsPerPageCombo.clear()
@@ -116,37 +121,20 @@ class DataTable(Ui_DataTable, BaseController):
         self.tableView.horizontalHeader().customContextMenuRequested.connect(
             self._showHeaderContextMenu
         )
-
-        # Add selection buttons to toolbar
-        self._addSelectionButtons()
-
         return self
 
-    def _addSelectionButtons(self):
-        """Add selection buttons to the toolbar"""
-        self.selectAllButton = QPushButton('All')
-        self.selectAllButton.setToolTip('Select All')
-        self.selectAllButton.setMaximumWidth(40)
+    def selectAll(self) -> Self:
+        self.tableView.selectAll()
+        return self
 
-        self.deselectAllButton = QPushButton('None')
-        self.deselectAllButton.setToolTip('Deselect All')
-        self.deselectAllButton.setMaximumWidth(40)
+    def selectNone(self) -> Self:
+        self.tableView.clearSelection()
+        return self
 
-        self.selectInverseButton = QPushButton('Inv')
-        self.selectInverseButton.setToolTip('Invert Selection')
-        self.selectInverseButton.setMaximumWidth(40)
+    def clearSelection(self) -> Self:
+        return self.selectNone()
 
-        # Insert buttons into the top toolbar layout
-        self.top_toolbar.insertWidget(1, self.selectAllButton)
-        self.top_toolbar.insertWidget(2, self.deselectAllButton)
-        self.top_toolbar.insertWidget(3, self.selectInverseButton)
-
-        # Connect signals manually
-        self.selectAllButton.clicked.connect(self.tableView.selectAll)
-        self.deselectAllButton.clicked.connect(self.tableView.clearSelection)
-        self.selectInverseButton.clicked.connect(self._invertSelection)
-
-    def _invertSelection(self):
+    def selectInverse(self):
         """Invert current selection"""
         rows = self._paginationModel.rowCount()
         selection_model = self.tableView.selectionModel()
@@ -156,7 +144,7 @@ class DataTable(Ui_DataTable, BaseController):
             selection_model.select(
                 index, QItemSelectionModel.Toggle | QItemSelectionModel.Rows
             )
-
+        return self
     def _save_state(self):
         """Save the current UI state of the table."""
         selected_ids = {row.get('id') for row in self.getSelectedRows()}
@@ -463,6 +451,64 @@ class DataTable(Ui_DataTable, BaseController):
         self._model.setFormattingFunction(column_key, func)
         return self
 
+    # Delegate Configuration Methods
+    def setProgressBarColor(self, column_key: str, color: Union[str, Any]) -> Self:
+        """Set base color for a progress bar column"""
+        if column_key not in self._column_configurations:
+            self._column_configurations[column_key] = {}
+        self._column_configurations[column_key]['base_color'] = color
+        
+        # Update existing delegate if visible
+        if column_key in self._model._visible_columns:
+            col_index = self._model._visible_columns.index(column_key)
+            delegate = self.tableView.itemDelegateForColumn(col_index)
+            if isinstance(delegate, ProgressBarDelegate):
+                delegate.set_base_color(color)
+        return self
+
+    def setProgressBarGradient(self, column_key: str, enabled: bool) -> Self:
+        """Enable/disable gradient for a progress bar column"""
+        if column_key not in self._column_configurations:
+            self._column_configurations[column_key] = {}
+        self._column_configurations[column_key]['gradient'] = enabled
+        
+        if column_key in self._model._visible_columns:
+            col_index = self._model._visible_columns.index(column_key)
+            delegate = self.tableView.itemDelegateForColumn(col_index)
+            if isinstance(delegate, ProgressBarDelegate):
+                delegate.set_gradient(enabled)
+        return self
+
+    def addProgressBarRange(self, column_key: str, min_pct: float, max_pct: float, color: Union[str, Any]) -> Self:
+        """Add a color range for a progress bar column"""
+        if column_key not in self._column_configurations:
+            self._column_configurations[column_key] = {}
+        if 'ranges' not in self._column_configurations[column_key]:
+            self._column_configurations[column_key]['ranges'] = []
+        self._column_configurations[column_key]['ranges'].append((min_pct, max_pct, color))
+        
+        if column_key in self._model._visible_columns:
+            col_index = self._model._visible_columns.index(column_key)
+            delegate = self.tableView.itemDelegateForColumn(col_index)
+            if isinstance(delegate, ProgressBarDelegate):
+                delegate.add_range(min_pct, max_pct, color)
+        return self
+
+    def setIconBooleanColors(self, column_key: str, yes_color: Union[str, Any], no_color: Union[str, Any]) -> Self:
+        """Set colors for an icon boolean column"""
+        if column_key not in self._column_configurations:
+            self._column_configurations[column_key] = {}
+        self._column_configurations[column_key]['yes_color'] = yes_color
+        self._column_configurations[column_key]['no_color'] = no_color
+        
+        if column_key in self._model._visible_columns:
+            col_index = self._model._visible_columns.index(column_key)
+            delegate = self.tableView.itemDelegateForColumn(col_index)
+            if isinstance(delegate, IconBooleanDelegate):
+                delegate.set_yes_color(QColor(yes_color))
+                delegate.set_no_color(QColor(no_color))
+        return self
+
     # Private methods
     def _onModelReset(self) -> None:
         """Handle model reset"""
@@ -488,6 +534,8 @@ class DataTable(Ui_DataTable, BaseController):
         """Apply delegates based on column types"""
         for i, col_key in enumerate(self._model._visible_columns):
             data_type = self._model._column_types.get(col_key)
+            config = self._column_configurations.get(col_key, {})
+            
             if data_type == DataType.NUMERIC:
                 delegate = NumericDelegate(self.tableView)
                 if self._show_integers_without_decimals:
@@ -501,6 +549,23 @@ class DataTable(Ui_DataTable, BaseController):
                 self.tableView.setItemDelegateForColumn(i, delegate)
             elif data_type == DataType.PROGRESS:
                 delegate = ProgressDelegate(self.tableView)
+                self.tableView.setItemDelegateForColumn(i, delegate)
+            elif data_type == DataType.PROGRESS_BAR:
+                delegate = ProgressBarDelegate(self.tableView)
+                if 'base_color' in config:
+                    delegate.set_base_color(config['base_color'])
+                if 'gradient' in config:
+                    delegate.set_gradient(config['gradient'])
+                if 'ranges' in config:
+                    for r in config['ranges']:
+                        delegate.add_range(*r)
+                self.tableView.setItemDelegateForColumn(i, delegate)
+            elif data_type == DataType.ICON_BOOLEAN:
+                delegate = IconBooleanDelegate(self.tableView)
+                if 'yes_color' in config:
+                    delegate.set_yes_color(QColor(config['yes_color']))
+                if 'no_color' in config:
+                    delegate.set_no_color(QColor(config['no_color']))
                 self.tableView.setItemDelegateForColumn(i, delegate)
 
     def clearLayout(self, layout):
@@ -580,17 +645,18 @@ class DataTable(Ui_DataTable, BaseController):
         total_filtered = self._proxyModel.rowCount()
 
         if total_filtered == 0:
-            self.totalEntriesLabel.setText('Showing 0 to 0 of 0 entries')
+            self.displayingEntriesLbl.setText('0')
+            self.totalEntriesLbl.setText('0')
             self._paginationModel.setPagination(1, self._rows_per_page)
             return
 
         start = (self._page - 1) * self._rows_per_page
         end = min(start + self._rows_per_page, total_filtered)
 
-        self.totalEntriesLabel.setText(
-            f'Showing {start + 1} to {end} of {total_filtered} entries'
+        self.displayingEntriesLbl.setText(
+            f'{start + 1} - {end}'
         )
-
+        self.totalEntriesLbl.setText(str(total_filtered))
         self._paginationModel.setPagination(self._page, self._rows_per_page)
 
     def _applySearch(self, term: str) -> None:

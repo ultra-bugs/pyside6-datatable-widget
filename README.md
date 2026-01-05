@@ -157,6 +157,44 @@ data_table.search("search term")
 matching_rows = model.searchColumn("name", "John")
 ```
 
+## Built-in Custom Delegates
+
+The library provides several built-in delegates for enhanced data visualization.
+
+### Progress Bar Delegate (`DataType.PROGRESS_BAR`)
+
+A highly customizable progress bar delegate.
+
+- **Default Behavior**: Displays a progress bar using the theme's highlight color.
+- **Customization**:
+    - `setProgressBarColor(column_key, color)`: Set a static base color.
+    - `setProgressBarGradient(column_key, enabled)`: Enable a gradient effect (fade from 0% to 100% opacity).
+    - `addProgressBarRange(column_key, min_pct, max_pct, color)`: Add color ranges (e.g., Red for <50%, Green for >80%).
+
+```python
+# Configure Progress Bar
+self.data_table.setProgressBarColor('completion', "#3b82f6") # Base color
+self.data_table.setProgressBarGradient('completion', True)   # Enable gradient
+
+# Or use ranges
+self.data_table.addProgressBarRange('completion', 0, 50, "#ef4444")   # Red for low
+self.data_table.addProgressBarRange('completion', 50, 80, "#eab308")  # Yellow for medium
+self.data_table.addProgressBarRange('completion', 80, 100, "#22c55e") # Green for high
+```
+
+### Icon Boolean Delegate (`DataType.ICON_BOOLEAN`)
+
+Displays boolean values using SVG icons instead of text or checkboxes.
+
+- **Default Behavior**: Displays a checkmark for `True` and an 'X' for `False`.
+- **Customization**:
+    - `setIconBooleanColors(column_key, yes_color, no_color)`: Customize the colors for the Yes and No states.
+
+```python
+# Configure Icon Boolean (defaults are Green/Red)
+self.data_table.setIconBooleanColors('status', yes_color="#00FF00", no_color="#FF0000")
+```
+
 ## API Reference
 
 ### DataTable
@@ -180,6 +218,14 @@ Main widget class that provides the UI and functionality.
 - `getSelectedRow()`: Get selected row data
 - `getAggregateValue(column_key, agg_type)`: Get aggregate value for column
 - `setUiSelectionType(mode, behavior) -> Self`: Set selection mode and behavior for the table view
+- `selectAll() -> Self`: This is fluent alias of `Model.selectAll()`
+- `selectNone() -> Self`: This is fluent alias of `Model.clearSelection()`
+- `clearSelection() -> Self`: This is fluent alias of `DataTable.selectNone()`
+- `selectInverse() -> Self`: Fluent select inverse
+- `setProgressBarColor(column_key, color) -> Self`: Set base color for a progress bar column
+- `setProgressBarGradient(column_key, enabled) -> Self`: Enable/disable gradient for a progress bar column
+- `addProgressBarRange(column_key, min_pct, max_pct, color) -> Self`: Add a color range for a progress bar column
+- `setIconBooleanColors(column_key, yes_color, no_color) -> Self`: Set colors for an icon boolean column
 
 #### Signals
 

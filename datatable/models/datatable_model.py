@@ -28,6 +28,8 @@ class DataType(Enum):
     BOOLEAN = auto()
     PROGRESS = auto()
     CUSTOM = auto()
+    PROGRESS_BAR = auto() # New type for ProgressBarDelegate
+    ICON_BOOLEAN = auto() # New type for IconBooleanDelegate
 
 
 class SortOrder(Enum):
@@ -301,6 +303,8 @@ class DataTableModel(QAbstractTableModel):
             self._search_funcs[key] = lambda val, term: term in val.strftime('%Y-%m-%d') if isinstance(val, datetime.date) else False
         elif data_type == DataType.BOOLEAN:
             self._search_funcs[key] = lambda val, term: (term.lower() in 'yes' and val) or (term.lower() in 'no' and not val)
+        elif data_type == DataType.ICON_BOOLEAN:
+            self._search_funcs[key] = lambda val, term: (term.lower() in 'yes' and val) or (term.lower() in 'no' and not val)
         else:
             self._search_funcs[key] = lambda val, term: term.lower() in str(val).lower()
 
@@ -312,8 +316,10 @@ class DataTableModel(QAbstractTableModel):
             self._sort_funcs[key] = lambda val: float(val) if val is not None else 0
         elif data_type == DataType.DATE:
             self._sort_funcs[key] = lambda val: val if isinstance(val, datetime.date) else datetime.date.min
-        elif data_type == DataType.BOOLEAN:
+        elif data_type == DataType.BOOLEAN or data_type == DataType.ICON_BOOLEAN:
             self._sort_funcs[key] = lambda val: bool(val)
+        elif data_type == DataType.PROGRESS or data_type == DataType.PROGRESS_BAR:
+            self._sort_funcs[key] = lambda val: float(val) if val is not None else 0
         else:
             self._sort_funcs[key] = lambda val: str(val) if val is not None else ''
 

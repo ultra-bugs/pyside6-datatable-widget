@@ -17,7 +17,19 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>DataTable</string>
+  </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QPushButton:hover {
+    background-color: #3e3e42;
+}
+
+QPushButton:pressed {
+    background-color: #007acc;
+}</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <property name="spacing">
@@ -36,7 +48,7 @@
     <number>1</number>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="top_toolbar">
+    <layout class="QHBoxLayout" name="topToolbar">
      <item>
       <widget class="QPushButton" name="columnVisibilityButton">
        <property name="text">
@@ -54,6 +66,9 @@
          <width>50</width>
          <height>0</height>
         </size>
+       </property>
+       <property name="toolTip">
+        <string>Items per page</string>
        </property>
        <item>
         <property name="text">
@@ -79,13 +94,16 @@
      </item>
      <item>
       <widget class="QLabel" name="rowsPerPageLabel">
+       <property name="visible">
+        <bool>false</bool>
+       </property>
        <property name="text">
         <string>/ page</string>
        </property>
       </widget>
      </item>
      <item>
-      <spacer name="horizontalSpacer">
+      <spacer name="horizontalSpacerTop">
        <property name="orientation">
         <enum>Qt::Orientation::Horizontal</enum>
        </property>
@@ -167,6 +185,9 @@
      <property name="sortingEnabled">
       <bool>true</bool>
      </property>
+     <attribute name="horizontalHeaderCascadingSectionResizes">
+      <bool>true</bool>
+     </attribute>
      <attribute name="horizontalHeaderStretchLastSection">
       <bool>true</bool>
      </attribute>
@@ -176,16 +197,36 @@
     </widget>
    </item>
    <item>
-    <layout class="QHBoxLayout" name="bottom_toolbar">
+    <layout class="QHBoxLayout" name="bottomToolbar">
+     <property name="spacing">
+      <number>2</number>
+     </property>
      <item>
-      <widget class="QLabel" name="totalEntriesLabel">
+      <widget class="QLabel" name="displayingEntriesLbl">
        <property name="text">
         <string>1 - 10</string>
        </property>
       </widget>
      </item>
      <item>
-      <spacer name="horizontalSpacer_2">
+      <widget class="QLabel" name="slashEntriesLbl">
+       <property name="text">
+        <string>/</string>
+       </property>
+       <property name="margin">
+        <number>-1</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="totalEntriesLbl">
+       <property name="text">
+        <string>50</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacerBottom">
        <property name="orientation">
         <enum>Qt::Orientation::Horizontal</enum>
        </property>
@@ -320,7 +361,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton">
+         <widget class="QPushButton" name="morePageBtn">
           <property name="text">
            <string>...</string>
           </property>
@@ -395,4 +436,21 @@
  </customwidgets>
  <resources/>
  <connections/>
+ <designerdata>
+  <property name="gridDeltaX">
+   <number>20</number>
+  </property>
+  <property name="gridDeltaY">
+   <number>20</number>
+  </property>
+  <property name="gridSnapX">
+   <bool>true</bool>
+  </property>
+  <property name="gridSnapY">
+   <bool>true</bool>
+  </property>
+  <property name="gridVisible">
+   <bool>true</bool>
+  </property>
+ </designerdata>
 </ui>

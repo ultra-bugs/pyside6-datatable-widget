@@ -1,20 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~             M""""""""`M            dP
-  ~             Mmmmmm   .M            88
-  ~             MMMMP  .MMM  dP    dP  88  .dP   .d8888b.
-  ~             MMP  .MMMMM  88    88  88888"    88'  `88
-  ~             M' .MMMMMMM  88.  .88  88  `8b.  88.  .88
-  ~             M         M  `88888P'  dP   `YP  `88888P'
-  ~             MMMMMMMMMMM    -*-  Created by Zuko  -*-
-  ~
-  ~             * * * * * * * * * * * * * * * * * * * * *
-  ~             * -    - -   F.R.E.E.M.I.N.D   - -    - *
-  ~             * -  Copyright © 2025 (Z) Programing  - *
-  ~             *    -  -  All Rights Reserved  -  -    *
-  ~             * * * * * * * * * * * * * * * * * * * * *
-  -->
-
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
@@ -36,7 +20,7 @@
    <string>Employee Management</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QMainWindow, QWidget {
+   <string notr="true">QWidget {
     background-color: #1e1e1e;
     color: #ffffff;
 }
@@ -103,6 +87,9 @@ QPushButton:pressed {
           <width>50</width>
           <height>0</height>
          </size>
+        </property>
+        <property name="toolTip">
+         <string>Items per page</string>
         </property>
         <item>
          <property name="text">

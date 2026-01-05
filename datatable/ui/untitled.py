@@ -28,18 +28,26 @@ class Ui_DataTable(object):
             DataTable.setObjectName(u"DataTable")
         DataTable.resize(830, 545)
         DataTable.setMinimumSize(QSize(640, 480))
+        DataTable.setAutoFillBackground(False)
+        DataTable.setStyleSheet(u"QPushButton:hover {\n"
+"    background-color: #3e3e42;\n"
+"}\n"
+"\n"
+"QPushButton:pressed {\n"
+"    background-color: #007acc;\n"
+"}")
         self.verticalLayout = QVBoxLayout(DataTable)
         self.verticalLayout.setSpacing(8)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.verticalLayout.setContentsMargins(1, 1, 1, 1)
-        self.top_toolbar = QHBoxLayout()
-        self.top_toolbar.setObjectName(u"top_toolbar")
+        self.topToolbar = QHBoxLayout()
+        self.topToolbar.setObjectName(u"topToolbar")
         self.columnVisibilityButton = QPushButton(DataTable)
         self.columnVisibilityButton.setObjectName(u"columnVisibilityButton")
         icon = QIcon(QIcon.fromTheme(QIcon.ThemeIcon.FormatJustifyCenter))
         self.columnVisibilityButton.setIcon(icon)
 
-        self.top_toolbar.addWidget(self.columnVisibilityButton)
+        self.topToolbar.addWidget(self.columnVisibilityButton)
 
         self.rowsPerPageCombo = QComboBox(DataTable)
         self.rowsPerPageCombo.addItem("")
@@ -49,27 +57,28 @@ class Ui_DataTable(object):
         self.rowsPerPageCombo.setObjectName(u"rowsPerPageCombo")
         self.rowsPerPageCombo.setMinimumSize(QSize(50, 0))
 
-        self.top_toolbar.addWidget(self.rowsPerPageCombo)
+        self.topToolbar.addWidget(self.rowsPerPageCombo)
 
         self.rowsPerPageLabel = QLabel(DataTable)
         self.rowsPerPageLabel.setObjectName(u"rowsPerPageLabel")
+        self.rowsPerPageLabel.setVisible(False)
 
-        self.top_toolbar.addWidget(self.rowsPerPageLabel)
+        self.topToolbar.addWidget(self.rowsPerPageLabel)
 
-        self.horizontalSpacer = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.horizontalSpacerTop = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
 
-        self.top_toolbar.addItem(self.horizontalSpacer)
+        self.topToolbar.addItem(self.horizontalSpacerTop)
 
         self.searchLabel = QLabel(DataTable)
         self.searchLabel.setObjectName(u"searchLabel")
 
-        self.top_toolbar.addWidget(self.searchLabel)
+        self.topToolbar.addWidget(self.searchLabel)
 
         self.searchInput = QLineEdit(DataTable)
         self.searchInput.setObjectName(u"searchInput")
         self.searchInput.setMinimumSize(QSize(200, 0))
 
-        self.top_toolbar.addWidget(self.searchInput)
+        self.topToolbar.addWidget(self.searchInput)
 
         self.typeComboBox = QComboBox(DataTable)
         self.typeComboBox.addItem("")
@@ -80,10 +89,10 @@ class Ui_DataTable(object):
         self.typeComboBox.addItem("")
         self.typeComboBox.setObjectName(u"typeComboBox")
 
-        self.top_toolbar.addWidget(self.typeComboBox)
+        self.topToolbar.addWidget(self.typeComboBox)
 
 
-        self.verticalLayout.addLayout(self.top_toolbar)
+        self.verticalLayout.addLayout(self.topToolbar)
 
         self.tableView = DataTableView(DataTable)
         self.tableView.setObjectName(u"tableView")
@@ -92,21 +101,34 @@ class Ui_DataTable(object):
         self.tableView.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.tableView.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.tableView.setSortingEnabled(True)
+        self.tableView.horizontalHeader().setCascadingSectionResizes(True)
         self.tableView.horizontalHeader().setStretchLastSection(True)
         self.tableView.verticalHeader().setVisible(False)
 
         self.verticalLayout.addWidget(self.tableView)
 
-        self.bottom_toolbar = QHBoxLayout()
-        self.bottom_toolbar.setObjectName(u"bottom_toolbar")
-        self.totalEntriesLabel = QLabel(DataTable)
-        self.totalEntriesLabel.setObjectName(u"totalEntriesLabel")
+        self.bottomToolbar = QHBoxLayout()
+        self.bottomToolbar.setSpacing(2)
+        self.bottomToolbar.setObjectName(u"bottomToolbar")
+        self.displayingEntriesLbl = QLabel(DataTable)
+        self.displayingEntriesLbl.setObjectName(u"displayingEntriesLbl")
 
-        self.bottom_toolbar.addWidget(self.totalEntriesLabel)
+        self.bottomToolbar.addWidget(self.displayingEntriesLbl)
 
-        self.horizontalSpacer_2 = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+        self.slashEntriesLbl = QLabel(DataTable)
+        self.slashEntriesLbl.setObjectName(u"slashEntriesLbl")
+        self.slashEntriesLbl.setMargin(-1)
 
-        self.bottom_toolbar.addItem(self.horizontalSpacer_2)
+        self.bottomToolbar.addWidget(self.slashEntriesLbl)
+
+        self.totalEntriesLbl = QLabel(DataTable)
+        self.totalEntriesLbl.setObjectName(u"totalEntriesLbl")
+
+        self.bottomToolbar.addWidget(self.totalEntriesLbl)
+
+        self.horizontalSpacerBottom = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
+
+        self.bottomToolbar.addItem(self.horizontalSpacerBottom)
 
         self.backwardLayout = QWidget(DataTable)
         self.backwardLayout.setObjectName(u"backwardLayout")
@@ -131,7 +153,7 @@ class Ui_DataTable(object):
         self._backwardLayout.addWidget(self.prevPageButton)
 
 
-        self.bottom_toolbar.addWidget(self.backwardLayout)
+        self.bottomToolbar.addWidget(self.backwardLayout)
 
         self.pageSpinBox = QSpinBox(DataTable)
         self.pageSpinBox.setObjectName(u"pageSpinBox")
@@ -145,7 +167,7 @@ class Ui_DataTable(object):
         self.pageSpinBox.setMinimum(1)
         self.pageSpinBox.setMaximum(99999999)
 
-        self.bottom_toolbar.addWidget(self.pageSpinBox)
+        self.bottomToolbar.addWidget(self.pageSpinBox)
 
         self.pagesLayout = QWidget(DataTable)
         self.pagesLayout.setObjectName(u"pagesLayout")
@@ -165,13 +187,13 @@ class Ui_DataTable(object):
 
         self._pagesLayout.addWidget(self.page2Button)
 
-        self.pushButton = QPushButton(self.pagesLayout)
-        self.pushButton.setObjectName(u"pushButton")
+        self.morePageBtn = QPushButton(self.pagesLayout)
+        self.morePageBtn.setObjectName(u"morePageBtn")
 
-        self._pagesLayout.addWidget(self.pushButton)
+        self._pagesLayout.addWidget(self.morePageBtn)
 
 
-        self.bottom_toolbar.addWidget(self.pagesLayout)
+        self.bottomToolbar.addWidget(self.pagesLayout)
 
         self.fowardLayout = QWidget(DataTable)
         self.fowardLayout.setObjectName(u"fowardLayout")
@@ -196,10 +218,10 @@ class Ui_DataTable(object):
         self._fowardLayout.addWidget(self.lastPageButton)
 
 
-        self.bottom_toolbar.addWidget(self.fowardLayout)
+        self.bottomToolbar.addWidget(self.fowardLayout)
 
 
-        self.verticalLayout.addLayout(self.bottom_toolbar)
+        self.verticalLayout.addLayout(self.bottomToolbar)
 
 
         self.retranslateUi(DataTable)
@@ -208,13 +230,16 @@ class Ui_DataTable(object):
     # setupUi
 
     def retranslateUi(self, DataTable):
-        DataTable.setWindowTitle(QCoreApplication.translate("DataTable", u"Form", None))
+        DataTable.setWindowTitle(QCoreApplication.translate("DataTable", u"DataTable", None))
         self.columnVisibilityButton.setText("")
         self.rowsPerPageCombo.setItemText(0, QCoreApplication.translate("DataTable", u"10", None))
         self.rowsPerPageCombo.setItemText(1, QCoreApplication.translate("DataTable", u"25", None))
         self.rowsPerPageCombo.setItemText(2, QCoreApplication.translate("DataTable", u"50", None))
         self.rowsPerPageCombo.setItemText(3, QCoreApplication.translate("DataTable", u"100", None))
 
+#if QT_CONFIG(tooltip)
+        self.rowsPerPageCombo.setToolTip(QCoreApplication.translate("DataTable", u"Items per page", None))
+#endif // QT_CONFIG(tooltip)
         self.rowsPerPageLabel.setText(QCoreApplication.translate("DataTable", u"/ page", None))
         self.searchLabel.setText(QCoreApplication.translate("DataTable", u"Search:", None))
         self.typeComboBox.setItemText(0, QCoreApplication.translate("DataTable", u"All Types", None))
@@ -224,12 +249,14 @@ class Ui_DataTable(object):
         self.typeComboBox.setItemText(4, QCoreApplication.translate("DataTable", u"DateTime", None))
         self.typeComboBox.setItemText(5, QCoreApplication.translate("DataTable", u"Boolean", None))
 
-        self.totalEntriesLabel.setText(QCoreApplication.translate("DataTable", u"1 - 10", None))
+        self.displayingEntriesLbl.setText(QCoreApplication.translate("DataTable", u"1 - 10", None))
+        self.slashEntriesLbl.setText(QCoreApplication.translate("DataTable", u"/", None))
+        self.totalEntriesLbl.setText(QCoreApplication.translate("DataTable", u"50", None))
         self.firstPageButton.setText("")
         self.prevPageButton.setText("")
         self.page1Button.setText(QCoreApplication.translate("DataTable", u"1", None))
         self.page2Button.setText(QCoreApplication.translate("DataTable", u"2", None))
-        self.pushButton.setText(QCoreApplication.translate("DataTable", u"...", None))
+        self.morePageBtn.setText(QCoreApplication.translate("DataTable", u"...", None))
         self.nextPageButton.setText("")
         self.lastPageButton.setText("")
     # retranslateUi

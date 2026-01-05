@@ -13,6 +13,9 @@
 #              * * * * * * * * * * * * * * * * * * * * *
 
 from .datatable_model import DataTableModel, DataType, SortOrder
-from .delegates import CellDelegate, NumericDelegate, DateDelegate, BooleanDelegate
+from .delegates import (CellDelegate, NumericDelegate, DateDelegate, BooleanDelegate, 
+                        ProgressBarDelegate, IconBooleanDelegate, LineDelegate, TextDelegate, ProgressDelegate)
 
-__all__ = ['DataTableModel', 'DataType', 'SortOrder', 'CellDelegate', 'NumericDelegate', 'DateDelegate', 'BooleanDelegate']
+__all__ = ['DataTableModel', 'DataType', 'SortOrder', 'CellDelegate', 'NumericDelegate', 
+           'DateDelegate', 'BooleanDelegate', 'ProgressBarDelegate', 'IconBooleanDelegate',
+           'LineDelegate', 'TextDelegate', 'ProgressDelegate']
