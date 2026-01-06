@@ -47,7 +47,7 @@ class DataTable(Ui_DataTable, BaseController):
         'prev_page_clicked': ['prevPageButton', 'clicked'],
         'first_page_clicked': ['firstPageButton', 'clicked'],
         'last_page_clicked': ['lastPageButton', 'clicked'],
-        'table_header_clicked': ['tableView.verticalHeader', 'sectionClicked'],
+        'table_header_clicked': ['tableView.horizontalHeader', 'sectionClicked'],
         'table_row_clicked': ['tableView', 'clicked'],
         'column_visibility_changed': ['columnVisibilityButton', 'clicked'],
         # 'select_all': ['selectAllButton', 'clicked'],
@@ -264,7 +264,23 @@ class DataTable(Ui_DataTable, BaseController):
         if self.searchInput.text() != term:
             self.searchInput.setText(term)
         else:
-            self._applySearch(term)
+            self.applyFilters(search_term=term)
+        return self
+
+    def applyFilters(self, search_term: Optional[str] = None, data_type: Optional[DataType] = None) -> Self:
+        """Apply search and data type filters to the table."""
+        current_search = self._proxyModel._search_term
+        current_type = self._proxyModel._data_type_filter
+
+        new_search = search_term if search_term is not None else current_search
+        new_type = data_type if data_type is not None else current_type
+
+        self._proxyModel.setSearchTerm(new_search)
+        self._proxyModel.setDataTypeFilter(new_type)
+
+        # Reset pagination to the first page
+        self.setPage(1)
+        self._updatePagination()
         return self
 
     def sort(self, column_key: str, order: SortOrder = SortOrder.ASCENDING) -> Self:
@@ -627,25 +643,6 @@ class DataTable(Ui_DataTable, BaseController):
         self.displayingEntriesLbl.setText(f'{start + 1} - {end}')
         self.totalEntriesLbl.setText(str(total_filtered))
         self._paginationModel.setPagination(self._page, self._rows_per_page)
-
-    def _applySearch(self, term: str) -> None:
-        """Apply search filter
-
-        Args:
-            term: Search term
-        """
-        # Use the advanced search capabilities of DataTableProxyModel
-        if hasattr(self._proxyModel, 'setSearchTerm'):
-            self._proxyModel.setSearchTerm(term)
-        else:
-            # Fallback to basic filtering if using standard QSortFilterProxyModel
-            self._proxyModel.setFilterFixedString(term)
-            self._proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-
-        # Reset pagination
-        self._page = 1
-        self.pageSpinBox.setValue(1)
-        self._updatePagination()
 
     def _setupHeaderContextMenu(self) -> None:
         """Setup context menu for header"""

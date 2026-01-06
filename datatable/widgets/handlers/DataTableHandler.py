@@ -103,6 +103,47 @@ class DataTableProxyModel(QSortFilterProxyModel):
 
         return True
 
+    def lessThan(self, left: QModelIndex, right: QModelIndex) -> bool:
+        """Sort using the sort functions defined in the source model"""
+        source_model = self.sourceModel()
+
+        # Map proxy indices to source indices
+        source_left = self.mapToSource(left)
+        source_right = self.mapToSource(right)
+
+        # Get column key
+        try:
+            # Column index is the same for proxy and source in this setup
+            col_key = source_model._visible_columns[left.column()]
+        except (AttributeError, IndexError):
+            return super().lessThan(left, right)
+
+        # Get values from source model using mapped indices
+        left_val = source_model.data(source_left, Qt.EditRole)
+        right_val = source_model.data(source_right, Qt.EditRole)
+
+        # Use custom sort function if available
+        if hasattr(source_model, '_sort_funcs') and col_key in source_model._sort_funcs:
+            sort_func = source_model._sort_funcs[col_key]
+            try:
+                return sort_func(left_val) < sort_func(right_val)
+            except Exception:
+                pass
+
+        # Default comparison
+        if left_val == right_val:
+            return False
+
+        if left_val is None:
+            return False
+        if right_val is None:
+            return True
+
+        try:
+            return left_val < right_val
+        except TypeError:
+            return str(left_val) < str(right_val)
+
 
 class DataTableHandler(Subscriber):
     """Handler for DataTable events"""
@@ -119,7 +160,7 @@ class DataTableHandler(Subscriber):
             text: Search text
             data: Event data
         """
-        self._apply_combined_filters()
+        self.table.search(text)
 
     def on_type_filter_changed(self, index: int, data: Dict[str, Any] = None):
         """Handle type filter changed
@@ -147,72 +188,7 @@ class DataTableHandler(Subscriber):
 
         data_type = type_map.get(type_index)
 
-        # Apply filters to table
-        filtered_rows = []
-
-        # Only filter if we have a search term or data type filter
-        if search_term or (data_type is not None and type_index > 0):
-            model = self.table._model
-
-            # Check each row
-            for row_idx, row_data in enumerate(model._data):
-                row_matches = True
-
-                # Type filter: check if any column in this row has the specified data type
-                if data_type is not None and type_index > 0:
-                    type_match = False
-
-                    for col_key, col_type in model._column_types.items():
-                        if col_type == data_type and col_key in model._visible_columns:
-                            type_match = True
-                            break
-
-                    if not type_match:
-                        row_matches = False
-
-                # Text search: check if any column contains the search term
-                if search_term and row_matches:
-                    search_match = False
-
-                    for col_key in model._visible_columns:
-                        value = row_data.get(col_key)
-
-                        # Use search function if available
-                        if col_key in model._search_funcs:
-                            if model._search_funcs[col_key](value, search_term):
-                                search_match = True
-                                break
-                        # Default text-based search
-                        elif value is not None and search_term.lower() in str(value).lower():
-                            search_match = True
-                            break
-
-                    if not search_match:
-                        row_matches = False
-
-                # Add row to filtered list if it matches all conditions
-                if row_matches:
-                    filtered_rows.append(row_idx)
-
-        # Apply filtering by setting visible rows on the model
-        # Hoặc sử dụng proxy model nếu được triển khai
-        if hasattr(self.table, '_proxyModel') and hasattr(self.table._proxyModel, 'setSearchTerm') and hasattr(self.table._proxyModel, 'setDataTypeFilter'):
-            # Sử dụng proxy model nếu có các phương thức phù hợp
-            self.table._proxyModel.setSearchTerm(search_term)
-            self.table._proxyModel.setDataTypeFilter(data_type)
-        else:
-            # TODO: is recursive-cicurla call ?
-            # if hasattr(self.table, 'applyFilters'):
-            #     self.table.applyFilters(filtered_rows)
-            # elif hasattr(self.table, '_applySearch'):
-            #     self.table._applySearch(search_term)
-            # DO NOT REMOVE above comment
-            pass
-
-        # Reset page to 1 when filter changes
-        self.table._page = 1
-        self.widget_manager.get('pageSpinBox').setValue(1)
-        self.table._updatePagination()
+        self.table.applyFilters(search_term, data_type)
 
     def on_page_changed(self, page: int, data: Dict[str, Any] = None):
         """Xử lý khi trang thay đổi
