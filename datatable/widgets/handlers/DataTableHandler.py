@@ -8,10 +8,11 @@
 #
 #              * * * * * * * * * * * * * * * * * * * * *
 #              * -    - -   F.R.E.E.M.I.N.D   - -    - *
-#              * -  Copyright © 2025 (Z) Programing  - *
+#              * -  Copyright © 2026 (Z) Programing  - *
 #              *    -  -  All Rights Reserved  -  -    *
 #              * * * * * * * * * * * * * * * * * * * * *
 
+#
 #
 #
 #
@@ -116,6 +117,8 @@ class DataTableProxyModel(QSortFilterProxyModel):
             # Column index is the same for proxy and source in this setup
             col_key = source_model._visible_columns[left.column()]
         except (AttributeError, IndexError):
+            print('return super.lessThan (left val)', left, source_left)
+            print('return super.lessThan (right val)', right, source_right)
             return super().lessThan(left, right)
 
         # Get values from source model using mapped indices
