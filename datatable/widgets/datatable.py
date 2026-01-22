@@ -16,8 +16,8 @@
 #
 from typing import Any, Callable, Dict, List, Optional, Self, Tuple, Union
 
-from PySide6.QtCore import QPoint, Qt, Signal, QTimer, QItemSelectionModel
-from PySide6.QtGui import QAction, QColor
+from PySide6.QtCore import QPoint, Qt, Signal, QTimer, QItemSelectionModel, QEvent
+from PySide6.QtGui import QAction, QColor, QCursor
 from PySide6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QPushButton, QSpinBox, QStyle, QTableView, QVBoxLayout
 
 from ..core.BaseController import BaseController
@@ -105,6 +105,12 @@ class DataTable(Ui_DataTable, BaseController):
         self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.tableView.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)
         self.tableView.horizontalHeader().customContextMenuRequested.connect(self._showHeaderContextMenu)
+        
+        # Enable mouse tracking for cursor feedback on expandable rows
+        self.tableView.setMouseTracking(True)
+        self.tableView.viewport().setMouseTracking(True)
+        self.tableView.viewport().installEventFilter(self)
+        
         return self
 
     def selectAll(self) -> Self:
@@ -222,6 +228,11 @@ class DataTable(Ui_DataTable, BaseController):
         """
         state = self._save_state()
         self._model.setModelData(data)
+        
+        # Hide all child rows initially if row collapsing is enabled
+        if self._model._row_collapsing_enabled:
+            self._hideAllChildRows()
+        
         self._restore_state(state)
         return self
 
@@ -510,12 +521,43 @@ class DataTable(Ui_DataTable, BaseController):
             row: Row index
             is_expanded: Whether row is expanded
         """
+        # Get child row indices from model
+        child_indices = self._model._getChildRowIndices(row)
+        
+        # Show/hide child rows in view
+        for child_idx in child_indices:
+            # Get the row in the current view (after filtering/pagination)
+            # We need to check if this row is visible in current page
+            source_index = self._model.index(child_idx, 0)
+            proxy_index = self._proxyModel.mapFromSource(source_index)
+            
+            if proxy_index.isValid():
+                pagination_index = self._paginationModel.mapFromSource(proxy_index)
+                if pagination_index.isValid():
+                    # Hide/show the row
+                    self.tableView.setRowHidden(pagination_index.row(), not is_expanded)
+        
+        # Emit signals
         if is_expanded:
             self.rowExpanded.emit(row, self._model._data[row])
         else:
             self.rowCollapsed.emit(row, self._model._data[row])
-
+        
+        # Update pagination (visible row count may have changed)
         self._updatePagination()
+    
+    def _hideAllChildRows(self) -> None:
+        """Hide all child rows initially"""
+        for row in range(len(self._model._data)):
+            if self._model._data[row].get('_is_child'):
+                # Get the row in the current view
+                source_index = self._model.index(row, 0)
+                proxy_index = self._proxyModel.mapFromSource(source_index)
+                
+                if proxy_index.isValid():
+                    pagination_index = self._paginationModel.mapFromSource(proxy_index)
+                    if pagination_index.isValid():
+                        self.tableView.setRowHidden(pagination_index.row(), True)
 
     def _applyDelegates(self) -> None:
         """Apply delegates based on column types"""
@@ -690,6 +732,34 @@ class DataTable(Ui_DataTable, BaseController):
 
         global_pos = header.mapToGlobal(pos)
         self._header_menu.popup(global_pos)
+    
+    def eventFilter(self, obj, event):
+        """Filter events to change cursor on hover over expandable rows"""
+        if obj == self.tableView.viewport() and self._model._row_collapsing_enabled:
+            if event.type() == QEvent.MouseMove:
+                # Get row under mouse
+                pos = event.pos()
+                index = self.tableView.indexAt(pos)
+                
+                if index.isValid():
+                    # Map to source model
+                    pagination_index = index
+                    filter_index = self._paginationModel.mapToSource(pagination_index)
+                    source_index = self._proxyModel.mapToSource(filter_index)
+                    source_row = source_index.row()
+                    
+                    # Check if this row is expandable
+                    if self._model.isRowCollapsable(source_row):
+                        self.tableView.viewport().setCursor(QCursor(Qt.PointingHandCursor))
+                    else:
+                        self.tableView.viewport().setCursor(QCursor(Qt.ArrowCursor))
+                else:
+                    self.tableView.viewport().setCursor(QCursor(Qt.ArrowCursor))
+            elif event.type() == QEvent.Leave:
+                # Reset cursor when mouse leaves
+                self.tableView.viewport().setCursor(QCursor(Qt.ArrowCursor))
+        
+        return super().eventFilter(obj, event)
 
     def _toggleColumnVisibility(self, column_key: str, checked: bool = None) -> None:
         """Toggle column visibility

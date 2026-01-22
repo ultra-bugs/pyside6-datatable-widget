@@ -286,9 +286,10 @@ class DataTableHandler(Subscriber):
 
         source_row = source_index.row()
 
-        # Check if it's the expand/collapse column and the first column
-        if index.column() == 0 and self.table._model._row_collapsing_enabled:
+        # Check if this is an expandable row (has children)
+        if self.table._model._row_collapsing_enabled:
             if self.table._model.isRowCollapsable(source_row):
+                # Toggle expansion when clicking anywhere on the row
                 self.table._model.toggleRowExpanded(source_row)
                 return
 

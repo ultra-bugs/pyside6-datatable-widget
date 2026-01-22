@@ -8,11 +8,11 @@
 #
 #              * * * * * * * * * * * * * * * * * * * * *
 #              * -    - -   F.R.E.E.M.I.N.D   - -    - *
-#              * -  Copyright © 2025 (Z) Programing  - *
+#              * -  Copyright © 2026 (Z) Programing  - *
 #              *    -  -  All Rights Reserved  -  -    *
 #              * * * * * * * * * * * * * * * * * * * * *
 
-
+#
 import sys
 from pathlib import Path
 
@@ -43,7 +43,44 @@ class ExampleWindow(QMainWindow):
 
         # Create DataTable
         self.data_table = DataTable()
+        columns = [
+            ('id', 'ID', DataType.NUMERIC),
+            ('name', 'Name', DataType.STRING),
+            ('total', 'total', DataType.NUMERIC),
+        ]
+        self.data_table.setColumns(columns)
         layout.addWidget(self.data_table)
+        # Enable row collapsing
+        self.data_table.enableRowCollapsing(True, "subrows")
+        
+        # Example data with subrows
+        data = [
+            {
+                "id": 1,
+                "name": "Category A",
+                "total": 1000,
+                "subrows": [
+                    {"id": 101, "name": "Item A1", "total": 500},
+                    {"id": 102, "name": "Item A2", "total": 500}
+                ]
+            },
+            {
+                "id": 2,
+                "name": "Category B",
+                "total": 2000,
+                "subrows": [
+                    {"id": 201, "name": "Item B1", "total": 1200},
+                    {"id": 202, "name": "Item B2", "total": 800}
+                ]
+            }
+        ]
+        
+        self.data_table.setData(data)
+        
+        # Connect expansion signals
+        self.data_table.rowExpanded.connect(lambda row, data: print(f"Row {row} expanded"))
+        self.data_table.rowCollapsed.connect(lambda row, data: print(f"Row {row} collapsed"))
+        return
 
         # Create sample data
         data = self._create_sample_data()

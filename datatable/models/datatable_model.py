@@ -164,10 +164,58 @@ class DataTableModel(QAbstractTableModel):
             data: List of dictionaries representing rows
         """
         self.beginResetModel()
-        self._data = data.copy()
+        
+        # Flatten data if row collapsing is enabled
+        if self._row_collapsing_enabled and self._child_row_key:
+            self._data = self._flattenData(data)
+        else:
+            self._data = data.copy()
+        
         self._expanded_rows = {}
         self._child_rows = {}
         self.endResetModel()
+    
+    def _flattenData(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Flatten hierarchical data structure
+        
+        Args:
+            data: Hierarchical data with child rows
+            
+        Returns:
+            Flattened list with parent and child rows
+        """
+        flattened = []
+        parent_index = 0
+        
+        for row in data:
+            # Add parent row
+            parent_row = row.copy()
+            parent_row['_is_parent'] = True
+            parent_row['_original_index'] = parent_index
+            parent_row['_has_children'] = self._child_row_key in row and bool(row[self._child_row_key])
+            
+            # Remove child key from parent display
+            if self._child_row_key in parent_row:
+                del parent_row[self._child_row_key]
+            
+            flattened.append(parent_row)
+            
+            # *** FIX: Store parent's index BEFORE adding children ***
+            parent_flattened_idx = len(flattened) - 1
+            
+            # Add child rows if they exist
+            if self._child_row_key in row and row[self._child_row_key]:
+                children = row[self._child_row_key]
+                for child_idx, child in enumerate(children):
+                    child_row = child.copy()
+                    child_row['_is_child'] = True
+                    child_row['_parent_index'] = parent_flattened_idx  # Use stored parent index
+                    child_row['_child_index'] = child_idx
+                    flattened.append(child_row)
+            
+            parent_index += 1
+        
+        return flattened
 
     def setColumns(self, columns: List[Tuple[str, str, DataType]]) -> None:
         """Set the columns for the model
@@ -349,10 +397,8 @@ class DataTableModel(QAbstractTableModel):
         if row < 0 or row >= len(self._data):
             return False
 
-        if self._child_row_key in self._data[row] and self._data[row][self._child_row_key]:
-            return True
-
-        return False
+        # Check if row has children flag (set during flattening)
+        return self._data[row].get('_has_children', False)
 
     def isRowExpanded(self, row: int) -> bool:
         """Check if row is expanded
@@ -363,13 +409,16 @@ class DataTableModel(QAbstractTableModel):
         Returns:
             Whether row is expanded
         """
+        # Check row data first, fall back to dict
+        if 0 <= row < len(self._data):
+            return self._data[row].get('_is_expanded', self._expanded_rows.get(row, False))
         return self._expanded_rows.get(row, False)
 
     def expandRow(self, row: int) -> bool:
-        """Expand a row
+        """Expand a row to show its children
 
         Args:
-            row: Row index
+            row: Row index in flattened data
 
         Returns:
             Success
@@ -380,19 +429,19 @@ class DataTableModel(QAbstractTableModel):
         if self.isRowExpanded(row):
             return True
 
-        # Store child rows
-        self._child_rows[row] = self._data[row][self._child_row_key]
+        # Mark as expanded in both dict and row data
         self._expanded_rows[row] = True
+        self._data[row]['_is_expanded'] = True
 
-        # Notify view of change
+        # Notify view of change (view will handle showing child rows)
         self.rowExpandedCollapsed.emit(row, True)
         return True
 
     def collapseRow(self, row: int) -> bool:
-        """Collapse a row
+        """Collapse a row to hide its children
 
         Args:
-            row: Row index
+            row: Row index in flattened data
 
         Returns:
             Success
@@ -403,9 +452,11 @@ class DataTableModel(QAbstractTableModel):
         if not self.isRowExpanded(row):
             return True
 
+        # Mark as collapsed in both dict and row data
         self._expanded_rows[row] = False
+        self._data[row]['_is_expanded'] = False
 
-        # Notify view of change
+        # Notify view of change (view will handle hiding child rows)
         self.rowExpandedCollapsed.emit(row, False)
         return True
 
@@ -436,6 +487,30 @@ class DataTableModel(QAbstractTableModel):
             return []
 
         return self._child_rows.get(row, [])
+    
+    def _getChildRowIndices(self, parent_row: int) -> List[int]:
+        """Get indices of child rows for a parent
+        
+        Args:
+            parent_row: Parent row index
+            
+        Returns:
+            List of child row indices
+        """
+        child_indices = []
+        
+        # Start from next row
+        for i in range(parent_row + 1, len(self._data)):
+            row_data = self._data[i]
+            
+            # Check if this is a child of our parent
+            if row_data.get('_is_child') and row_data.get('_parent_index') == parent_row:
+                child_indices.append(i)
+            # Stop when we hit another parent or non-child
+            elif not row_data.get('_is_child'):
+                break
+        
+        return child_indices
 
     # Search and Filter Methods
     def search(self, term: str) -> List[int]:
