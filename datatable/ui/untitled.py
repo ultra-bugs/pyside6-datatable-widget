@@ -1,9 +1,22 @@
 # -*- coding: utf-8 -*-
 
+#                      M""""""""`M            dP
+#                      Mmmmmm   .M            88
+#                      MMMMP  .MMM  dP    dP  88  .dP   .d8888b.
+#                      MMP  .MMMMM  88    88  88888"    88'  `88
+#                      M' .MMMMMMM  88.  .88  88  `8b.  88.  .88
+#                      M         M  `88888P'  dP   `YP  `88888P'
+#                      MMMMMMMMMMM    -*-  Created by Zuko  -*-
+#
+#                      * * * * * * * * * * * * * * * * * * * * *
+#                      * -    - -   F.R.E.E.M.I.N.D   - -    - *
+#                      * -  Copyright © 2026 (Z) Programing  - *
+#                      *    -  -  All Rights Reserved  -  -    *
+#                      * * * * * * * * * * * * * * * * * * * * *
+
 ################################################################################
 ## Form generated from reading UI file 'untitled.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.10.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
