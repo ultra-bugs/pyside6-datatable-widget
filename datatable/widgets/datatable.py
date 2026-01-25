@@ -736,8 +736,10 @@ class DataTable(Ui_DataTable, BaseController):
 
         # Column visibility actions
         vis_menu = self._header_menu.addMenu('Column Visibility')
-        for i, key in enumerate(self._model._column_keys):
-            header_text = self._model._headers[i]
+        # Create mapping from column_keys to headers to avoid index issues
+        headers_dict = dict(zip(self._model._column_keys, self._model._headers))
+        for key in self._model._column_keys:
+            header_text = headers_dict.get(key, key)  # Fallback to key if not found
             action = QAction(header_text, vis_menu)
             action.setCheckable(True)
             action.setChecked(key in self._model._visible_columns)
