@@ -1,22 +1,9 @@
 # -*- coding: utf-8 -*-
 
-#                      M""""""""`M            dP
-#                      Mmmmmm   .M            88
-#                      MMMMP  .MMM  dP    dP  88  .dP   .d8888b.
-#                      MMP  .MMMMM  88    88  88888"    88'  `88
-#                      M' .MMMMMMM  88.  .88  88  `8b.  88.  .88
-#                      M         M  `88888P'  dP   `YP  `88888P'
-#                      MMMMMMMMMMM    -*-  Created by Zuko  -*-
-#
-#                      * * * * * * * * * * * * * * * * * * * * *
-#                      * -    - -   F.R.E.E.M.I.N.D   - -    - *
-#                      * -  Copyright © 2026 (Z) Programing  - *
-#                      *    -  -  All Rights Reserved  -  -    *
-#                      * * * * * * * * * * * * * * * * * * * * *
-
 ################################################################################
 ## Form generated from reading UI file 'untitled.ui'
 ##
+## Created by: Qt User Interface Compiler version 6.10.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -28,10 +15,10 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QAbstractItemView, QApplication, QComboBox, QHBoxLayout,
-    QHeaderView, QLabel, QLineEdit, QPushButton,
-    QSizePolicy, QSpacerItem, QSpinBox, QVBoxLayout,
-    QWidget)
+from PySide6.QtWidgets import (QAbstractItemView, QAbstractScrollArea, QApplication, QComboBox,
+    QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+    QPushButton, QSizePolicy, QSpacerItem, QSpinBox,
+    QVBoxLayout, QWidget)
 
 from ..widgets.utils import DataTableView
 
@@ -109,12 +96,14 @@ class Ui_DataTable(object):
 
         self.tableView = DataTableView(DataTable)
         self.tableView.setObjectName(u"tableView")
+        self.tableView.setAutoFillBackground(True)
+        self.tableView.setSizeAdjustPolicy(QAbstractScrollArea.SizeAdjustPolicy.AdjustToContents)
         self.tableView.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked)
         self.tableView.setAlternatingRowColors(True)
         self.tableView.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.tableView.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.tableView.setSortingEnabled(True)
-        self.tableView.horizontalHeader().setCascadingSectionResizes(True)
+        self.tableView.horizontalHeader().setMinimumSectionSize(45)
         self.tableView.horizontalHeader().setStretchLastSection(True)
         self.tableView.verticalHeader().setVisible(False)
 
