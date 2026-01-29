@@ -28,7 +28,7 @@
 
 #
 #
-from typing import Any, Callable, Dict, List, Optional, Self, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from PySide6.QtCore import QPoint, Qt, Signal, QTimer, QItemSelectionModel, QEvent
 from PySide6.QtGui import QAction, QColor, QCursor
@@ -51,7 +51,7 @@ class DataTable(Ui_DataTable, BaseController):
     rowCollapsed = Signal(int, dict)
     dataFiltered = Signal(list)
     sortChanged = Signal(str, SortOrder)
-
+    selectionChanged = Signal(QItemSelectionModel, QItemSelectionModel)
     # Slot map
     slot_map = {
         'search_text_changed': ['searchInput', 'textChanged'],
@@ -64,9 +64,10 @@ class DataTable(Ui_DataTable, BaseController):
         'table_header_clicked': ['tableView.horizontalHeader', 'sectionClicked'],
         'table_row_clicked': ['tableView', 'clicked'],
         'column_visibility_changed': ['columnVisibilityButton', 'clicked'],
+        'selection_changed': ['tableView.selectionModel', 'selectionChanged']
         # 'select_all': ['selectAllButton', 'clicked'],
         # 'deselect_all': ['deselectAllButton', 'clicked'],
-        # 'select_inverse': ['selectInverseButton', 'clicked'],
+        # 'select_inverse': ['selectInverseButton', 'clicked']
     }
 
     def __init__(self, parent=None):
@@ -127,15 +128,15 @@ class DataTable(Ui_DataTable, BaseController):
         
         return self
 
-    def selectAll(self) -> Self:
+    def selectAll(self) -> 'DataTable':
         self.tableView.selectAll()
         return self
 
-    def selectNone(self) -> Self:
+    def selectNone(self) -> 'DataTable':
         self.tableView.clearSelection()
         return self
 
-    def clearSelection(self) -> Self:
+    def clearSelection(self) -> 'DataTable':
         return self.selectNone()
 
     def selectInverse(self):
@@ -183,7 +184,7 @@ class DataTable(Ui_DataTable, BaseController):
         QTimer.singleShot(0, lambda: self.tableView.horizontalScrollBar().setValue(state.get('h_scroll', 0)))
 
     # Public API
-    def setModel(self, model: DataTableModel) -> Self:
+    def setModel(self, model: DataTableModel) -> 'DataTable':
         """Set the data model
 
         Args:
@@ -203,7 +204,7 @@ class DataTable(Ui_DataTable, BaseController):
 
     def setUiSelectionType(
         self, mode: Union[QTableView.SelectionMode, int] = QTableView.ExtendedSelection, behavior: Union[QTableView.SelectionBehavior, int] = QTableView.SelectRows
-    ) -> Self:
+    ) -> 'DataTable':
         """Set the selection mode and behavior for the table view.
 
         Args:
@@ -234,7 +235,7 @@ class DataTable(Ui_DataTable, BaseController):
         except (ValueError, TypeError) as e:
             raise
 
-    def setData(self, data: List[Dict[str, Any]]) -> Self:
+    def setData(self, data: List[Dict[str, Any]]) -> 'DataTable':
         """Set the table data while preserving UI state.
 
         Args:
@@ -250,7 +251,7 @@ class DataTable(Ui_DataTable, BaseController):
         self._restore_state(state)
         return self
 
-    def setColumns(self, columns: List[Tuple[str, str, DataType]]) -> Self:
+    def setColumns(self, columns: List[Tuple[str, str, DataType]]) -> 'DataTable':
         """Set the table columns
 
         Args:
@@ -260,7 +261,7 @@ class DataTable(Ui_DataTable, BaseController):
         self._applyDelegates()
         return self
 
-    def setVisibleColumns(self, columns: List[str]) -> Self:
+    def setVisibleColumns(self, columns: List[str]) -> 'DataTable':
         """Set which columns are visible
 
         Args:
@@ -269,7 +270,7 @@ class DataTable(Ui_DataTable, BaseController):
         self._model.setVisibleColumns(columns)
         return self
 
-    def enableRowCollapsing(self, enabled: bool = True, child_row_key: str = 'children') -> Self:
+    def enableRowCollapsing(self, enabled: bool = True, child_row_key: str = 'children') -> 'DataTable':
         """Enable or disable row collapsing
 
         Args:
@@ -279,7 +280,7 @@ class DataTable(Ui_DataTable, BaseController):
         self._model.enableRowCollapsing(enabled, child_row_key)
         return self
 
-    def search(self, term: str) -> Self:
+    def search(self, term: str) -> 'DataTable':
         """Search the table
 
         Args:
@@ -292,7 +293,7 @@ class DataTable(Ui_DataTable, BaseController):
             self.applyFilters(search_term=term)
         return self
 
-    def applyFilters(self, search_term: Optional[str] = None, data_type: Optional[DataType] = None) -> Self:
+    def applyFilters(self, search_term: Optional[str] = None, data_type: Optional[DataType] = None) -> 'DataTable':
         """Apply search and data type filters to the table."""
         current_search = self._proxyModel._search_term
         current_type = self._proxyModel._data_type_filter
@@ -308,7 +309,7 @@ class DataTable(Ui_DataTable, BaseController):
         self._updatePagination()
         return self
 
-    def sort(self, column_key: str, order: SortOrder = SortOrder.ASCENDING) -> Self:
+    def sort(self, column_key: str, order: SortOrder = SortOrder.ASCENDING) -> 'DataTable':
         """Sort the table
 
         Args:
@@ -322,7 +323,7 @@ class DataTable(Ui_DataTable, BaseController):
         self.tableView.sortByColumn(col_index, order.value)
         return self
 
-    def setPage(self, page: int) -> Self:
+    def setPage(self, page: int) -> 'DataTable':
         """Set the current page
 
         Args:
@@ -339,7 +340,7 @@ class DataTable(Ui_DataTable, BaseController):
         self.pageChanged.emit(page)
         return self
 
-    def setRowsPerPage(self, rows: int) -> Self:
+    def setRowsPerPage(self, rows: int) -> 'DataTable':
         """Set rows per page
 
         Args:
@@ -434,7 +435,7 @@ class DataTable(Ui_DataTable, BaseController):
             self._updatePagination()
         return success
 
-    def setIntegerDisplay(self, show_without_decimals: bool) -> Self:
+    def setIntegerDisplay(self, show_without_decimals: bool) -> 'DataTable':
         """Set whether to display integers without decimal places
 
         Args:
@@ -453,7 +454,7 @@ class DataTable(Ui_DataTable, BaseController):
                     self._model.setFormattingFunction(col_key, lambda n: f'{n:,.2f}' if isinstance(n, (int, float)) else str(n))
         return self
 
-    def setFormattingFunction(self, column_key: str, func: Callable) -> Self:
+    def setFormattingFunction(self, column_key: str, func: Callable) -> 'DataTable':
         """Set the formatting function for a column
 
         Args:
@@ -464,7 +465,7 @@ class DataTable(Ui_DataTable, BaseController):
         return self
 
     # Delegate Configuration Methods
-    def setProgressBarColor(self, column_key: str, color: Union[str, Any]) -> Self:
+    def setProgressBarColor(self, column_key: str, color: Union[str, Any]) -> 'DataTable':
         """Set base color for a progress bar column"""
         if column_key not in self._column_configurations:
             self._column_configurations[column_key] = {}
@@ -478,7 +479,7 @@ class DataTable(Ui_DataTable, BaseController):
                 delegate.set_base_color(color)
         return self
 
-    def setProgressBarGradient(self, column_key: str, enabled: bool) -> Self:
+    def setProgressBarGradient(self, column_key: str, enabled: bool) -> 'DataTable':
         """Enable/disable gradient for a progress bar column"""
         if column_key not in self._column_configurations:
             self._column_configurations[column_key] = {}
@@ -491,7 +492,7 @@ class DataTable(Ui_DataTable, BaseController):
                 delegate.set_gradient(enabled)
         return self
 
-    def addProgressBarRange(self, column_key: str, min_pct: float, max_pct: float, color: Union[str, Any]) -> Self:
+    def addProgressBarRange(self, column_key: str, min_pct: float, max_pct: float, color: Union[str, Any]) -> 'DataTable':
         """Add a color range for a progress bar column"""
         if column_key not in self._column_configurations:
             self._column_configurations[column_key] = {}
@@ -506,7 +507,7 @@ class DataTable(Ui_DataTable, BaseController):
                 delegate.add_range(min_pct, max_pct, color)
         return self
 
-    def setIconBooleanColors(self, column_key: str, yes_color: Union[str, Any], no_color: Union[str, Any]) -> Self:
+    def setIconBooleanColors(self, column_key: str, yes_color: Union[str, Any], no_color: Union[str, Any]) -> 'DataTable':
         """Set colors for an icon boolean column"""
         if column_key not in self._column_configurations:
             self._column_configurations[column_key] = {}

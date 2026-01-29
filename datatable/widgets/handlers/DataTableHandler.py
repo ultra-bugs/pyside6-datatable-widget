@@ -11,29 +11,11 @@
 #                      * -  Copyright © 2026 (Z) Programing  - *
 #                      *    -  -  All Rights Reserved  -  -    *
 #                      * * * * * * * * * * * * * * * * * * * * *
-
-#              M""""""""`M            dP
-#              Mmmmmm   .M            88
-#              MMMMP  .MMM  dP    dP  88  .dP   .d8888b.
-#              MMP  .MMMMM  88    88  88888"    88'  `88
-#              M' .MMMMMMM  88.  .88  88  `8b.  88.  .88
-#              M         M  `88888P'  dP   `YP  `88888P'
-#              MMMMMMMMMMM    -*-  Created by Zuko  -*-
-#
-#              * * * * * * * * * * * * * * * * * * * * *
-#              * -    - -   F.R.E.E.M.I.N.D   - -    - *
-#              * -  Copyright © 2026 (Z) Programing  - *
-#              *    -  -  All Rights Reserved  -  -    *
-#              * * * * * * * * * * * * * * * * * * * * *
-
-#
-#
-#
-#
 from typing import Any, Dict
 
-from PySide6.QtCore import QModelIndex, Qt, QSortFilterProxyModel, QAbstractItemModel
+from PySide6.QtCore import QItemSelectionModel, QModelIndex, Qt, QSortFilterProxyModel, QAbstractItemModel
 from PySide6.QtWidgets import QHeaderView, QMenu
+
 
 from ...core.Observer import Subscriber
 from ...core.WidgetManager import WidgetManager
@@ -168,7 +150,17 @@ class DataTableHandler(Subscriber):
     def __init__(self, widget_manager: WidgetManager, events: list):
         super().__init__(events)
         self.widget_manager = widget_manager
-        self.table = widget_manager.controller
+        from ... import DataTable
+        self.table:DataTable = widget_manager.controller
+
+    def on_selection_changed(self, selected: QItemSelectionModel, deselected: QItemSelectionModel):
+        """Handle selection changes
+
+        Args:
+            selected: Selected items
+            deselected: Deselected items
+        """
+        self.table.selectionChanged.emit(selected, deselected)
 
     def on_search_text_changed(self, text: str, data: Dict[str, Any] = None):
         """Handle search text changed
