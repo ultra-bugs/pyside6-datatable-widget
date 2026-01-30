@@ -12,19 +12,7 @@
 #                      *    -  -  All Rights Reserved  -  -    *
 #                      * * * * * * * * * * * * * * * * * * * * *
 
-#              M""""""""`M            dP
-#              Mmmmmm   .M            88
-#              MMMMP  .MMM  dP    dP  88  .dP   .d8888b.
-#              MMP  .MMMMM  88    88  88888"    88'  `88
-#              M' .MMMMMMM  88.  .88  88  `8b.  88.  .88
-#              M         M  `88888P'  dP   `YP  `88888P'
-#              MMMMMMMMMMM    -*-  Created by Zuko  -*-
-#
-#              * * * * * * * * * * * * * * * * * * * * *
-#              * -    - -   F.R.E.E.M.I.N.D   - -    - *
-#              * -  Copyright © 2025 (Z) Programing  - *
-#              *    -  -  All Rights Reserved  -  -    *
-#              * * * * * * * * * * * * * * * * * * * * *
+
 
 #
 #
@@ -38,7 +26,7 @@ from ..core.BaseController import BaseController
 from ..models.datatable_model import DataTableModel, DataType, SortOrder
 from ..models.delegates import BooleanDelegate, DateDelegate, NumericDelegate, ProgressDelegate, ProgressBarDelegate, IconBooleanDelegate
 from ..ui.untitled import Ui_DataTable
-from ..widgets.handlers.DataTableHandler import DataTableProxyModel, PaginationProxyModel
+from ..widgets.handlers.DataTableHandler import DataTableProxyModel
 
 
 class DataTable(Ui_DataTable, BaseController):
@@ -76,12 +64,9 @@ class DataTable(Ui_DataTable, BaseController):
         self._proxyModel = DataTableProxyModel(self)
         self._proxyModel.setSourceModel(self._model)
         self._proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-        self._proxyModel.setDynamicSortFilter(True)
+        self._proxyModel.setDynamicSortFilter(False)  # Disable auto-sort to preserve grouping
 
-        self._paginationModel = PaginationProxyModel(self)
-        self._paginationModel.setSourceModel(self._proxyModel)
-
-        self.tableView.setModel(self._paginationModel)
+        self.tableView.setModel(self._proxyModel)
 
         # Pagination state
         self._page = 1
@@ -161,25 +146,24 @@ class DataTable(Ui_DataTable, BaseController):
             return
 
         # Restore selection
-        selected_ids = state.get('selected_ids', set())
-        if selected_ids:
-            selection_model: QItemSelectionModel = self.tableView.selectionModel()
-            selection_model.clearSelection()
+        selectedIds = state.get('selected_ids', set())
+        if selectedIds:
+            selectionModel: QItemSelectionModel = self.tableView.selectionModel()
+            selectionModel.clearSelection()
 
-            # Iterate through the visible rows in the proxy model
-            for row in range(self._paginationModel.rowCount()):
-                # Map view index to source model index
-                pagination_index = self._paginationModel.index(row, 0)
-                filter_index = self._paginationModel.mapToSource(pagination_index)
-                source_index = self._proxyModel.mapToSource(filter_index)
+            # Iterate through visible rows in proxy
+            for row in range(self._proxyModel.rowCount()):
+                # Map view index to source model
+                proxyIndex = self._proxyModel.index(row, 0)
+                sourceIndex = self._proxyModel.mapToSource(proxyIndex)
 
-                # Get the unique ID from the source model
-                row_data = self._model.getRowData(source_index.row())
-                if row_data and row_data.get('id') in selected_ids:
-                    # Select the row in the view (tableView)
-                    selection_model.select(pagination_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
+                # Get unique ID from source model
+                rowData = self._model.getRowData(sourceIndex.row())
+                if rowData and rowData.get('id') in selectedIds:
+                    # Select row in view
+                    selectionModel.select(proxyIndex, QItemSelectionModel.Select | QItemSelectionModel.Rows)
 
-        # Restore scroll positions after the view has been updated
+        # Restore scroll positions
         QTimer.singleShot(0, lambda: self.tableView.verticalScrollBar().setValue(state.get('v_scroll', 0)))
         QTimer.singleShot(0, lambda: self.tableView.horizontalScrollBar().setValue(state.get('h_scroll', 0)))
 
@@ -192,7 +176,6 @@ class DataTable(Ui_DataTable, BaseController):
         """
         self._model = model
         self._proxyModel.setSourceModel(model)
-        self._paginationModel.setSourceModel(self._proxyModel)
         # Connect model signals
         self._model.modelReset.connect(self._onModelReset)
         self._model.rowExpandedCollapsed.connect(self._onRowExpandedCollapsed)
@@ -384,15 +367,14 @@ class DataTable(Ui_DataTable, BaseController):
         if not indexes:
             return []
 
-        selected_data = []
+        selectedData = []
         for index in indexes:
-            pagination_index = index
-            filter_index = self._paginationModel.mapToSource(pagination_index)
-            source_index = self._proxyModel.mapToSource(filter_index)
-            model_row = source_index.row()
-            selected_data.append(self._model._data[model_row])
+            # Map view (proxy) index to source model
+            sourceIndex = self._proxyModel.mapToSource(index)
+            modelRow = sourceIndex.row()
+            selectedData.append(self._model._data[modelRow])
 
-        return selected_data
+        return selectedData
 
     def getAggregateValue(self, column_key: str, agg_type: str) -> Any:
         """Get aggregate value for column
@@ -529,31 +511,28 @@ class DataTable(Ui_DataTable, BaseController):
         self._updatePagination()
         # self.statusLabel.setText(f'Total entries: {len(self._model._data)}')
 
-    def _onRowExpandedCollapsed(self, row: int, is_expanded: bool) -> None:
+    def _onRowExpandedCollapsed(self, row: int, isExpanded: bool) -> None:
         """Handle row expanded/collapsed
 
         Args:
             row: Row index
-            is_expanded: Whether row is expanded
+            isExpanded: Whether row is expanded
         """
         # Get child row indices from model
-        child_indices = self._model._getChildRowIndices(row)
+        childIndices = self._model._getChildRowIndices(row)
         
         # Show/hide child rows in view
-        for child_idx in child_indices:
-            # Get the row in the current view (after filtering/pagination)
-            # We need to check if this row is visible in current page
-            source_index = self._model.index(child_idx, 0)
-            proxy_index = self._proxyModel.mapFromSource(source_index)
+        for childIdx in childIndices:
+            # Get row in current view (after filtering/pagination)
+            sourceIndex = self._model.index(childIdx, 0)
+            proxyIndex = self._proxyModel.mapFromSource(sourceIndex)
             
-            if proxy_index.isValid():
-                pagination_index = self._paginationModel.mapFromSource(proxy_index)
-                if pagination_index.isValid():
-                    # Hide/show the row
-                    self.tableView.setRowHidden(pagination_index.row(), not is_expanded)
+            if proxyIndex.isValid():
+                # Hide/show the row
+                self.tableView.setRowHidden(proxyIndex.row(), not isExpanded)
         
         # Emit signals
-        if is_expanded:
+        if isExpanded:
             self.rowExpanded.emit(row, self._model._data[row])
         else:
             self.rowCollapsed.emit(row, self._model._data[row])
@@ -565,14 +544,12 @@ class DataTable(Ui_DataTable, BaseController):
         """Hide all child rows initially"""
         for row in range(len(self._model._data)):
             if self._model._data[row].get('_is_child'):
-                # Get the row in the current view
-                source_index = self._model.index(row, 0)
-                proxy_index = self._proxyModel.mapFromSource(source_index)
+                # Get row in current view
+                sourceIndex = self._model.index(row, 0)
+                proxyIndex = self._proxyModel.mapFromSource(sourceIndex)
                 
-                if proxy_index.isValid():
-                    pagination_index = self._paginationModel.mapFromSource(proxy_index)
-                    if pagination_index.isValid():
-                        self.tableView.setRowHidden(pagination_index.row(), True)
+                if proxyIndex.isValid():
+                    self.tableView.setRowHidden(proxyIndex.row(), True)
 
     def _applyDelegates(self) -> None:
         """Apply delegates based on column types"""
@@ -686,20 +663,20 @@ class DataTable(Ui_DataTable, BaseController):
 
     def _updateVisibleRows(self) -> None:
         """Update which rows are visible based on pagination"""
-        total_filtered = self._proxyModel.rowCount()
+        totalFiltered = self._proxyModel.rowCount()
 
-        if total_filtered == 0:
+        if totalFiltered == 0:
             self.displayingEntriesLbl.setText('0')
             self.totalEntriesLbl.setText('0')
-            self._paginationModel.setPagination(1, self._rows_per_page)
+            self._proxyModel.disablePagination()
             return
 
         start = (self._page - 1) * self._rows_per_page
-        end = min(start + self._rows_per_page, total_filtered)
+        end = min(start + self._rows_per_page, totalFiltered)
 
         self.displayingEntriesLbl.setText(f'{start + 1} - {end}')
-        self.totalEntriesLbl.setText(str(total_filtered))
-        self._paginationModel.setPagination(self._page, self._rows_per_page)
+        self.totalEntriesLbl.setText(str(totalFiltered))
+        self._proxyModel.setPaginationRange(start, end)
 
     def _setupHeaderContextMenu(self) -> None:
         """Setup context menu for header"""
@@ -751,31 +728,28 @@ class DataTable(Ui_DataTable, BaseController):
         self._header_menu.popup(global_pos)
     
     def eventFilter(self, obj, event):
-        """Filter events to change cursor on hover over expandable rows"""
-        if obj == self.tableView.viewport() and self._model._row_collapsing_enabled:
-            if event.type() == QEvent.MouseMove:
-                # Get row under mouse
-                pos = event.pos()
-                index = self.tableView.indexAt(pos)
-                
-                if index.isValid():
-                    # Map to source model
-                    pagination_index = index
-                    filter_index = self._paginationModel.mapToSource(pagination_index)
-                    source_index = self._proxyModel.mapToSource(filter_index)
-                    source_row = source_index.row()
-                    
-                    # Check if this row is expandable
-                    if self._model.isRowCollapsable(source_row):
-                        self.tableView.viewport().setCursor(QCursor(Qt.PointingHandCursor))
-                    else:
-                        self.tableView.viewport().setCursor(QCursor(Qt.ArrowCursor))
-                else:
-                    self.tableView.viewport().setCursor(QCursor(Qt.ArrowCursor))
-            elif event.type() == QEvent.Leave:
-                # Reset cursor when mouse leaves
-                self.tableView.viewport().setCursor(QCursor(Qt.ArrowCursor))
-        
+        """Event filter for handling mouse hover tooltips"""
+        if obj == self.tableView.viewport() and event.type() == QEvent.Type.ToolTip:
+            # Get the index at the cursor position
+            viewportPos = event.pos()
+            index = self.tableView.indexAt(viewportPos)
+
+            if index.isValid():
+                # Map view (proxy) index to source model
+                sourceIndex = self._proxyModel.mapToSource(index)
+                column = sourceIndex.column()
+
+                # Check if the column has associated help text
+                if column < len(self._model._visible_columns):
+                    columnKey = self._model._visible_columns[column]
+                    helpText = self._model._column_help.get(columnKey)
+
+                    if helpText:
+                        # Show the tooltip
+                        from PySide6.QtWidgets import QToolTip
+                        QToolTip.showText(event.globalPos(), helpText, self.tableView)
+                        return True
+
         return super().eventFilter(obj, event)
 
     def _toggleColumnVisibility(self, column_key: str, checked: bool = None) -> None:
