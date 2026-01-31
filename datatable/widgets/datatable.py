@@ -12,23 +12,10 @@
 #                      *    -  -  All Rights Reserved  -  -    *
 #                      * * * * * * * * * * * * * * * * * * * * *
 
-#              M""""""""`M            dP
-#              Mmmmmm   .M            88
-#              MMMMP  .MMM  dP    dP  88  .dP   .d8888b.
-#              MMP  .MMMMM  88    88  88888"    88'  `88
-#              M' .MMMMMMM  88.  .88  88  `8b.  88.  .88
-#              M         M  `88888P'  dP   `YP  `88888P'
-#              MMMMMMMMMMM    -*-  Created by Zuko  -*-
-#
-#              * * * * * * * * * * * * * * * * * * * * *
-#              * -    - -   F.R.E.E.M.I.N.D   - -    - *
-#              * -  Copyright © 2025 (Z) Programing  - *
-#              *    -  -  All Rights Reserved  -  -    *
-#              * * * * * * * * * * * * * * * * * * * * *
 
 #
 #
-from typing import Any, Callable, Dict, List, Optional, Self, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from PySide6.QtCore import QPoint, Qt, Signal, QTimer, QItemSelectionModel, QEvent
 from PySide6.QtGui import QAction, QColor, QCursor
@@ -38,7 +25,7 @@ from ..core.BaseController import BaseController
 from ..models.datatable_model import DataTableModel, DataType, SortOrder
 from ..models.delegates import BooleanDelegate, DateDelegate, NumericDelegate, ProgressDelegate, ProgressBarDelegate, IconBooleanDelegate
 from ..ui.untitled import Ui_DataTable
-from ..widgets.handlers.DataTableHandler import DataTableProxyModel, PaginationProxyModel
+from ..widgets.handlers.DataTableHandler import DataTableProxyModel
 
 
 class DataTable(Ui_DataTable, BaseController):
@@ -51,7 +38,7 @@ class DataTable(Ui_DataTable, BaseController):
     rowCollapsed = Signal(int, dict)
     dataFiltered = Signal(list)
     sortChanged = Signal(str, SortOrder)
-
+    selectionChanged = Signal(QItemSelectionModel, QItemSelectionModel)
     # Slot map
     slot_map = {
         'search_text_changed': ['searchInput', 'textChanged'],
@@ -64,9 +51,10 @@ class DataTable(Ui_DataTable, BaseController):
         'table_header_clicked': ['tableView.horizontalHeader', 'sectionClicked'],
         'table_row_clicked': ['tableView', 'clicked'],
         'column_visibility_changed': ['columnVisibilityButton', 'clicked'],
+        'selection_changed': ['tableView.selectionModel', 'selectionChanged']
         # 'select_all': ['selectAllButton', 'clicked'],
         # 'deselect_all': ['deselectAllButton', 'clicked'],
-        # 'select_inverse': ['selectInverseButton', 'clicked'],
+        # 'select_inverse': ['selectInverseButton', 'clicked']
     }
 
     def __init__(self, parent=None):
@@ -75,12 +63,9 @@ class DataTable(Ui_DataTable, BaseController):
         self._proxyModel = DataTableProxyModel(self)
         self._proxyModel.setSourceModel(self._model)
         self._proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
-        self._proxyModel.setDynamicSortFilter(True)
+        self._proxyModel.setDynamicSortFilter(False)  # Disable auto-sort to preserve grouping
 
-        self._paginationModel = PaginationProxyModel(self)
-        self._paginationModel.setSourceModel(self._proxyModel)
-
-        self.tableView.setModel(self._paginationModel)
+        self.tableView.setModel(self._proxyModel)
 
         # Pagination state
         self._page = 1
@@ -127,15 +112,15 @@ class DataTable(Ui_DataTable, BaseController):
         
         return self
 
-    def selectAll(self) -> Self:
+    def selectAll(self) -> 'DataTable':
         self.tableView.selectAll()
         return self
 
-    def selectNone(self) -> Self:
+    def selectNone(self) -> 'DataTable':
         self.tableView.clearSelection()
         return self
 
-    def clearSelection(self) -> Self:
+    def clearSelection(self) -> 'DataTable':
         return self.selectNone()
 
     def selectInverse(self):
@@ -160,30 +145,29 @@ class DataTable(Ui_DataTable, BaseController):
             return
 
         # Restore selection
-        selected_ids = state.get('selected_ids', set())
-        if selected_ids:
-            selection_model: QItemSelectionModel = self.tableView.selectionModel()
-            selection_model.clearSelection()
+        selectedIds = state.get('selected_ids', set())
+        if selectedIds:
+            selectionModel: QItemSelectionModel = self.tableView.selectionModel()
+            selectionModel.clearSelection()
 
-            # Iterate through the visible rows in the proxy model
-            for row in range(self._paginationModel.rowCount()):
-                # Map view index to source model index
-                pagination_index = self._paginationModel.index(row, 0)
-                filter_index = self._paginationModel.mapToSource(pagination_index)
-                source_index = self._proxyModel.mapToSource(filter_index)
+            # Iterate through visible rows in proxy
+            for row in range(self._proxyModel.rowCount()):
+                # Map view index to source model
+                proxyIndex = self._proxyModel.index(row, 0)
+                sourceIndex = self._proxyModel.mapToSource(proxyIndex)
 
-                # Get the unique ID from the source model
-                row_data = self._model.getRowData(source_index.row())
-                if row_data and row_data.get('id') in selected_ids:
-                    # Select the row in the view (tableView)
-                    selection_model.select(pagination_index, QItemSelectionModel.Select | QItemSelectionModel.Rows)
+                # Get unique ID from source model
+                rowData = self._model.getRowData(sourceIndex.row())
+                if rowData and rowData.get('id') in selectedIds:
+                    # Select row in view
+                    selectionModel.select(proxyIndex, QItemSelectionModel.Select | QItemSelectionModel.Rows)
 
-        # Restore scroll positions after the view has been updated
+        # Restore scroll positions
         QTimer.singleShot(0, lambda: self.tableView.verticalScrollBar().setValue(state.get('v_scroll', 0)))
         QTimer.singleShot(0, lambda: self.tableView.horizontalScrollBar().setValue(state.get('h_scroll', 0)))
 
     # Public API
-    def setModel(self, model: DataTableModel) -> Self:
+    def setModel(self, model: DataTableModel) -> 'DataTable':
         """Set the data model
 
         Args:
@@ -191,7 +175,6 @@ class DataTable(Ui_DataTable, BaseController):
         """
         self._model = model
         self._proxyModel.setSourceModel(model)
-        self._paginationModel.setSourceModel(self._proxyModel)
         # Connect model signals
         self._model.modelReset.connect(self._onModelReset)
         self._model.rowExpandedCollapsed.connect(self._onRowExpandedCollapsed)
@@ -203,7 +186,7 @@ class DataTable(Ui_DataTable, BaseController):
 
     def setUiSelectionType(
         self, mode: Union[QTableView.SelectionMode, int] = QTableView.ExtendedSelection, behavior: Union[QTableView.SelectionBehavior, int] = QTableView.SelectRows
-    ) -> Self:
+    ) -> 'DataTable':
         """Set the selection mode and behavior for the table view.
 
         Args:
@@ -234,7 +217,7 @@ class DataTable(Ui_DataTable, BaseController):
         except (ValueError, TypeError) as e:
             raise
 
-    def setData(self, data: List[Dict[str, Any]]) -> Self:
+    def setData(self, data: List[Dict[str, Any]]) -> 'DataTable':
         """Set the table data while preserving UI state.
 
         Args:
@@ -250,7 +233,7 @@ class DataTable(Ui_DataTable, BaseController):
         self._restore_state(state)
         return self
 
-    def setColumns(self, columns: List[Tuple[str, str, DataType]]) -> Self:
+    def setColumns(self, columns: List[Tuple[str, str, DataType]]) -> 'DataTable':
         """Set the table columns
 
         Args:
@@ -260,7 +243,7 @@ class DataTable(Ui_DataTable, BaseController):
         self._applyDelegates()
         return self
 
-    def setVisibleColumns(self, columns: List[str]) -> Self:
+    def setVisibleColumns(self, columns: List[str]) -> 'DataTable':
         """Set which columns are visible
 
         Args:
@@ -269,7 +252,7 @@ class DataTable(Ui_DataTable, BaseController):
         self._model.setVisibleColumns(columns)
         return self
 
-    def enableRowCollapsing(self, enabled: bool = True, child_row_key: str = 'children') -> Self:
+    def enableRowCollapsing(self, enabled: bool = True, child_row_key: str = 'children') -> 'DataTable':
         """Enable or disable row collapsing
 
         Args:
@@ -279,7 +262,7 @@ class DataTable(Ui_DataTable, BaseController):
         self._model.enableRowCollapsing(enabled, child_row_key)
         return self
 
-    def search(self, term: str) -> Self:
+    def search(self, term: str) -> 'DataTable':
         """Search the table
 
         Args:
@@ -292,7 +275,7 @@ class DataTable(Ui_DataTable, BaseController):
             self.applyFilters(search_term=term)
         return self
 
-    def applyFilters(self, search_term: Optional[str] = None, data_type: Optional[DataType] = None) -> Self:
+    def applyFilters(self, search_term: Optional[str] = None, data_type: Optional[DataType] = None) -> 'DataTable':
         """Apply search and data type filters to the table."""
         current_search = self._proxyModel._search_term
         current_type = self._proxyModel._data_type_filter
@@ -308,7 +291,7 @@ class DataTable(Ui_DataTable, BaseController):
         self._updatePagination()
         return self
 
-    def sort(self, column_key: str, order: SortOrder = SortOrder.ASCENDING) -> Self:
+    def sort(self, column_key: str, order: SortOrder = SortOrder.ASCENDING) -> 'DataTable':
         """Sort the table
 
         Args:
@@ -322,7 +305,7 @@ class DataTable(Ui_DataTable, BaseController):
         self.tableView.sortByColumn(col_index, order.value)
         return self
 
-    def setPage(self, page: int) -> Self:
+    def setPage(self, page: int) -> 'DataTable':
         """Set the current page
 
         Args:
@@ -339,7 +322,7 @@ class DataTable(Ui_DataTable, BaseController):
         self.pageChanged.emit(page)
         return self
 
-    def setRowsPerPage(self, rows: int) -> Self:
+    def setRowsPerPage(self, rows: int) -> 'DataTable':
         """Set rows per page
 
         Args:
@@ -383,15 +366,14 @@ class DataTable(Ui_DataTable, BaseController):
         if not indexes:
             return []
 
-        selected_data = []
+        selectedData = []
         for index in indexes:
-            pagination_index = index
-            filter_index = self._paginationModel.mapToSource(pagination_index)
-            source_index = self._proxyModel.mapToSource(filter_index)
-            model_row = source_index.row()
-            selected_data.append(self._model._data[model_row])
+            # Map view (proxy) index to source model
+            sourceIndex = self._proxyModel.mapToSource(index)
+            modelRow = sourceIndex.row()
+            selectedData.append(self._model._data[modelRow])
 
-        return selected_data
+        return selectedData
 
     def getAggregateValue(self, column_key: str, agg_type: str) -> Any:
         """Get aggregate value for column
@@ -434,7 +416,7 @@ class DataTable(Ui_DataTable, BaseController):
             self._updatePagination()
         return success
 
-    def setIntegerDisplay(self, show_without_decimals: bool) -> Self:
+    def setIntegerDisplay(self, show_without_decimals: bool) -> 'DataTable':
         """Set whether to display integers without decimal places
 
         Args:
@@ -453,7 +435,7 @@ class DataTable(Ui_DataTable, BaseController):
                     self._model.setFormattingFunction(col_key, lambda n: f'{n:,.2f}' if isinstance(n, (int, float)) else str(n))
         return self
 
-    def setFormattingFunction(self, column_key: str, func: Callable) -> Self:
+    def setFormattingFunction(self, column_key: str, func: Callable) -> 'DataTable':
         """Set the formatting function for a column
 
         Args:
@@ -464,7 +446,7 @@ class DataTable(Ui_DataTable, BaseController):
         return self
 
     # Delegate Configuration Methods
-    def setProgressBarColor(self, column_key: str, color: Union[str, Any]) -> Self:
+    def setProgressBarColor(self, column_key: str, color: Union[str, Any]) -> 'DataTable':
         """Set base color for a progress bar column"""
         if column_key not in self._column_configurations:
             self._column_configurations[column_key] = {}
@@ -478,7 +460,7 @@ class DataTable(Ui_DataTable, BaseController):
                 delegate.set_base_color(color)
         return self
 
-    def setProgressBarGradient(self, column_key: str, enabled: bool) -> Self:
+    def setProgressBarGradient(self, column_key: str, enabled: bool) -> 'DataTable':
         """Enable/disable gradient for a progress bar column"""
         if column_key not in self._column_configurations:
             self._column_configurations[column_key] = {}
@@ -491,7 +473,7 @@ class DataTable(Ui_DataTable, BaseController):
                 delegate.set_gradient(enabled)
         return self
 
-    def addProgressBarRange(self, column_key: str, min_pct: float, max_pct: float, color: Union[str, Any]) -> Self:
+    def addProgressBarRange(self, column_key: str, min_pct: float, max_pct: float, color: Union[str, Any]) -> 'DataTable':
         """Add a color range for a progress bar column"""
         if column_key not in self._column_configurations:
             self._column_configurations[column_key] = {}
@@ -506,7 +488,7 @@ class DataTable(Ui_DataTable, BaseController):
                 delegate.add_range(min_pct, max_pct, color)
         return self
 
-    def setIconBooleanColors(self, column_key: str, yes_color: Union[str, Any], no_color: Union[str, Any]) -> Self:
+    def setIconBooleanColors(self, column_key: str, yes_color: Union[str, Any], no_color: Union[str, Any]) -> 'DataTable':
         """Set colors for an icon boolean column"""
         if column_key not in self._column_configurations:
             self._column_configurations[column_key] = {}
@@ -528,31 +510,28 @@ class DataTable(Ui_DataTable, BaseController):
         self._updatePagination()
         # self.statusLabel.setText(f'Total entries: {len(self._model._data)}')
 
-    def _onRowExpandedCollapsed(self, row: int, is_expanded: bool) -> None:
+    def _onRowExpandedCollapsed(self, row: int, isExpanded: bool) -> None:
         """Handle row expanded/collapsed
 
         Args:
             row: Row index
-            is_expanded: Whether row is expanded
+            isExpanded: Whether row is expanded
         """
         # Get child row indices from model
-        child_indices = self._model._getChildRowIndices(row)
+        childIndices = self._model._getChildRowIndices(row)
         
         # Show/hide child rows in view
-        for child_idx in child_indices:
-            # Get the row in the current view (after filtering/pagination)
-            # We need to check if this row is visible in current page
-            source_index = self._model.index(child_idx, 0)
-            proxy_index = self._proxyModel.mapFromSource(source_index)
+        for childIdx in childIndices:
+            # Get row in current view (after filtering/pagination)
+            sourceIndex = self._model.index(childIdx, 0)
+            proxyIndex = self._proxyModel.mapFromSource(sourceIndex)
             
-            if proxy_index.isValid():
-                pagination_index = self._paginationModel.mapFromSource(proxy_index)
-                if pagination_index.isValid():
-                    # Hide/show the row
-                    self.tableView.setRowHidden(pagination_index.row(), not is_expanded)
+            if proxyIndex.isValid():
+                # Hide/show the row
+                self.tableView.setRowHidden(proxyIndex.row(), not isExpanded)
         
         # Emit signals
-        if is_expanded:
+        if isExpanded:
             self.rowExpanded.emit(row, self._model._data[row])
         else:
             self.rowCollapsed.emit(row, self._model._data[row])
@@ -564,14 +543,12 @@ class DataTable(Ui_DataTable, BaseController):
         """Hide all child rows initially"""
         for row in range(len(self._model._data)):
             if self._model._data[row].get('_is_child'):
-                # Get the row in the current view
-                source_index = self._model.index(row, 0)
-                proxy_index = self._proxyModel.mapFromSource(source_index)
+                # Get row in current view
+                sourceIndex = self._model.index(row, 0)
+                proxyIndex = self._proxyModel.mapFromSource(sourceIndex)
                 
-                if proxy_index.isValid():
-                    pagination_index = self._paginationModel.mapFromSource(proxy_index)
-                    if pagination_index.isValid():
-                        self.tableView.setRowHidden(pagination_index.row(), True)
+                if proxyIndex.isValid():
+                    self.tableView.setRowHidden(proxyIndex.row(), True)
 
     def _applyDelegates(self) -> None:
         """Apply delegates based on column types"""
@@ -685,20 +662,20 @@ class DataTable(Ui_DataTable, BaseController):
 
     def _updateVisibleRows(self) -> None:
         """Update which rows are visible based on pagination"""
-        total_filtered = self._proxyModel.rowCount()
+        totalFiltered = self._proxyModel.rowCount()
 
-        if total_filtered == 0:
+        if totalFiltered == 0:
             self.displayingEntriesLbl.setText('0')
             self.totalEntriesLbl.setText('0')
-            self._paginationModel.setPagination(1, self._rows_per_page)
+            self._proxyModel.disablePagination()
             return
 
         start = (self._page - 1) * self._rows_per_page
-        end = min(start + self._rows_per_page, total_filtered)
+        end = min(start + self._rows_per_page, totalFiltered)
 
         self.displayingEntriesLbl.setText(f'{start + 1} - {end}')
-        self.totalEntriesLbl.setText(str(total_filtered))
-        self._paginationModel.setPagination(self._page, self._rows_per_page)
+        self.totalEntriesLbl.setText(str(totalFiltered))
+        self._proxyModel.setPaginationRange(start, end)
 
     def _setupHeaderContextMenu(self) -> None:
         """Setup context menu for header"""
@@ -750,31 +727,28 @@ class DataTable(Ui_DataTable, BaseController):
         self._header_menu.popup(global_pos)
     
     def eventFilter(self, obj, event):
-        """Filter events to change cursor on hover over expandable rows"""
-        if obj == self.tableView.viewport() and self._model._row_collapsing_enabled:
-            if event.type() == QEvent.MouseMove:
-                # Get row under mouse
-                pos = event.pos()
-                index = self.tableView.indexAt(pos)
-                
-                if index.isValid():
-                    # Map to source model
-                    pagination_index = index
-                    filter_index = self._paginationModel.mapToSource(pagination_index)
-                    source_index = self._proxyModel.mapToSource(filter_index)
-                    source_row = source_index.row()
-                    
-                    # Check if this row is expandable
-                    if self._model.isRowCollapsable(source_row):
-                        self.tableView.viewport().setCursor(QCursor(Qt.PointingHandCursor))
-                    else:
-                        self.tableView.viewport().setCursor(QCursor(Qt.ArrowCursor))
-                else:
-                    self.tableView.viewport().setCursor(QCursor(Qt.ArrowCursor))
-            elif event.type() == QEvent.Leave:
-                # Reset cursor when mouse leaves
-                self.tableView.viewport().setCursor(QCursor(Qt.ArrowCursor))
-        
+        """Event filter for handling mouse hover tooltips"""
+        if obj == self.tableView.viewport() and event.type() == QEvent.Type.ToolTip:
+            # Get the index at the cursor position
+            viewportPos = event.pos()
+            index = self.tableView.indexAt(viewportPos)
+
+            if index.isValid() and hasattr(self._model, '_column_help'):
+                # Map view (proxy) index to source model
+                sourceIndex = self._proxyModel.mapToSource(index)
+                column = sourceIndex.column()
+
+                # Check if the column has associated help text
+                if column < len(self._model._visible_columns):
+                    columnKey = self._model._visible_columns[column]
+                    helpText = self._model._column_help.get(columnKey)
+
+                    if helpText:
+                        # Show the tooltip
+                        from PySide6.QtWidgets import QToolTip
+                        QToolTip.showText(event.globalPos(), helpText, self.tableView)
+                        return True
+
         return super().eventFilter(obj, event)
 
     def _toggleColumnVisibility(self, column_key: str, checked: bool = None) -> None:
