@@ -93,10 +93,7 @@ class DataTableProxyModel(QSortFilterProxyModel):
                 return False
 
         return True
-
-    # lessThan NOT overridden - let Qt use default stable sort to preserve row grouping
-
-
+        
 class DataTableHandler(Subscriber):
     """Handler for DataTable events"""
 
@@ -153,6 +150,7 @@ class DataTableHandler(Subscriber):
         # self.table.applyFilters(search_term, data_type)
         # Apply filters to table
         filtered_rows = []
+
         # Only filter if we have a search term or data type filter
         if search_term or (data_type is not None and type_index > 0):
             model = self.table._model

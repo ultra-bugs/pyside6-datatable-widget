@@ -45,5 +45,5 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     python_requires='>=3.10',
-    install_requires=['PySide6>=6.1.0'],
+    install_requires=['PySide6>=6.1.0', 'better-exceptions', 'loguru'],
 )

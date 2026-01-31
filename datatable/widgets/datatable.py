@@ -13,7 +13,6 @@
 #                      * * * * * * * * * * * * * * * * * * * * *
 
 
-
 #
 #
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -363,7 +362,7 @@ class DataTable(Ui_DataTable, BaseController):
         Returns:
             List of selected row data dictionaries
         """
-        indexes = self.tableView.selectionModel().selectedRows()
+        indexes = self.tableView.selectionModel().selectedIndexes()
         if not indexes:
             return []
 
@@ -734,7 +733,7 @@ class DataTable(Ui_DataTable, BaseController):
             viewportPos = event.pos()
             index = self.tableView.indexAt(viewportPos)
 
-            if index.isValid():
+            if index.isValid() and hasattr(self._model, '_column_help'):
                 # Map view (proxy) index to source model
                 sourceIndex = self._proxyModel.mapToSource(index)
                 column = sourceIndex.column()

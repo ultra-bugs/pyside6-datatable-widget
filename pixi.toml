@@ -1,0 +1,16 @@
+[workspace]
+authors = ["Zuko <tansautn@gmail.com>"]
+channels = ["conda-forge"]
+name = "pdw"
+platforms = ["win-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = ">=3.10,<3.14"
+pyside6 = ">=6.10.1,<7"
+loguru = "*"
+
+[pypi-dependencies]
+better-exceptions = "*"

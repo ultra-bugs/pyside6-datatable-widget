@@ -13,8 +13,6 @@
 #                      * * * * * * * * * * * * * * * * * * * * *
 
 
-
-#
 from .Observer import Publisher, Subscriber, singleton
 from .WidgetManager import WidgetManager
 
