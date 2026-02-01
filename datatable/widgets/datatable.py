@@ -282,12 +282,11 @@ class DataTable(Ui_DataTable, BaseController):
 
         new_search = search_term if search_term is not None else current_search
         new_type = data_type if data_type is not None else current_type
-
+        self.setPage(1)
         self._proxyModel.setSearchTerm(new_search)
         self._proxyModel.setDataTypeFilter(new_type)
 
         # Reset pagination to the first page
-        self.setPage(1)
         self._updatePagination()
         return self
 

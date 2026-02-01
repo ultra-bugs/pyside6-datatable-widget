@@ -146,7 +146,7 @@ class DataTableHandler(Subscriber):
         }
 
         data_type = type_map.get(type_index)
-
+        return self.table.applyFilters(search_term, data_type)
         # self.table.applyFilters(search_term, data_type)
         # Apply filters to table
         filtered_rows = []
