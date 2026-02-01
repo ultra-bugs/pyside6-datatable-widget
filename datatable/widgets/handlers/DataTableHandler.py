@@ -310,6 +310,8 @@ class DataTableHandler(Subscriber):
         if hasattr(self.table, '_proxy_model') and self.table._proxy_model:
             source_index = self.table._proxy_model.mapToSource(index)
             row = source_index.row()
+            if not source_index.isValid():
+                return
         else:
             row = index.row()
         
@@ -320,7 +322,12 @@ class DataTableHandler(Subscriber):
                 return
                 
         # Emit signal
-        self.table.rowSelected.emit(row, self.table._model._data[row])
+        try:
+            
+            self.table.rowSelected.emit(row, self.table._model._data[row])
+        except (IndexError):
+            print(self.table._model._data)
+            breakpoint()
         
     def on_column_visibility_changed(self, data: Dict[str, Any] = None):
         """Handle column visibility button clicked
