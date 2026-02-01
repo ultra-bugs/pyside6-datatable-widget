@@ -42,7 +42,7 @@ class DataTable(Ui_DataTable, BaseController):
     
     # Slot map
     slot_map = {
-        'search_text_changed': ['searchLineEdit', 'textChanged'],
+        'search_text_changed': ['searchInput', 'textChanged'],
         'page_changed': ['pageSpinBox', 'valueChanged'],
         'rows_per_page_changed': ['rowsPerPageCombo', 'currentIndexChanged'],
         'next_page_clicked': ['nextPageButton', 'clicked'],
@@ -96,95 +96,6 @@ class DataTable(Ui_DataTable, BaseController):
         
         # Preferences
         self._show_integers_without_decimals = True
-    
-    def setupUi0ld(self, widget):
-        """Setup the UI components"""
-        self.setMinimumSize(640, 480)
-        
-        # Main layout
-        main_layout = QVBoxLayout(widget)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        
-        # Top toolbar
-        top_toolbar = QHBoxLayout()
-        
-        # Search area
-        search_label = QLabel('Search:')
-        top_toolbar.addWidget(search_label)
-        
-        self.searchInput = QLineEdit()
-        self.searchInput.setPlaceholderText('Search in table...')
-        top_toolbar.addWidget(self.searchInput)
-        
-        top_toolbar.addStretch()
-        
-        # Column visibility button
-        self.columnVisibilityButton = QPushButton('Columns')
-        top_toolbar.addWidget(self.columnVisibilityButton)
-        
-        main_layout.addLayout(top_toolbar)
-        
-        # Table view
-        self.tableView = QTableView()
-        main_layout.addWidget(self.tableView)
-        
-        # Bottom toolbar
-        bottom_toolbar = QHBoxLayout()
-        
-        # Pagination controls
-        self.firstPageButton = QPushButton('«')
-        self.firstPageButton.setToolTip('First Page')
-        bottom_toolbar.addWidget(self.firstPageButton)
-        
-        self.prevPageButton = QPushButton('‹')
-        self.prevPageButton.setToolTip('Previous Page')
-        bottom_toolbar.addWidget(self.prevPageButton)
-        
-        self.pageLabel = QLabel('Page:')
-        bottom_toolbar.addWidget(self.pageLabel)
-        
-        self.pageSpinBox = QSpinBox()
-        self.pageSpinBox.setMinimum(1)
-        self.pageSpinBox.setMaximum(1)
-        bottom_toolbar.addWidget(self.pageSpinBox)
-        
-        self.totalPagesLabel = QLabel('of 1')
-        bottom_toolbar.addWidget(self.totalPagesLabel)
-        
-        self.nextPageButton = QPushButton('›')
-        self.nextPageButton.setToolTip('Next Page')
-        bottom_toolbar.addWidget(self.nextPageButton)
-        
-        self.lastPageButton = QPushButton('»')
-        self.lastPageButton.setToolTip('Last Page')
-        bottom_toolbar.addWidget(self.lastPageButton)
-        
-        bottom_toolbar.addStretch()
-        
-        # Rows per page
-        rows_per_page_label = QLabel('Show entries:')
-        bottom_toolbar.addWidget(rows_per_page_label)
-        
-        self.rowsPerPageCombo = QComboBox()
-        bottom_toolbar.addWidget(self.rowsPerPageCombo)
-        
-        # Total entries
-        self.totalEntriesLabel = QLabel('Showing 0 to 0 of 0 entries')
-        bottom_toolbar.addWidget(self.totalEntriesLabel)
-        
-        main_layout.addLayout(bottom_toolbar)
-        
-        # Status bar
-        status_bar = QFrame()
-        status_bar.setFrameShape(QFrame.StyledPanel)
-        status_bar.setFrameShadow(QFrame.Sunken)
-        status_layout = QHBoxLayout(status_bar)
-        status_layout.setContentsMargins(5, 2, 5, 2)
-        
-        self.statusLabel = QLabel('')
-        status_layout.addWidget(self.statusLabel)
-        
-        main_layout.addWidget(status_bar)
     
     # Public API
     def setModel(self, model: DataTableModel) -> None:
@@ -249,8 +160,9 @@ class DataTable(Ui_DataTable, BaseController):
         # Update the search input if it doesn't match
         if self.searchInput.text() != term:
             self.searchInput.setText(term)
-        else:
-            self._applySearch(term)
+            # let Qt signal does it's job
+        # else:
+        #     self._applySearch(term)
     
     def sort(self, column_key: str, order: SortOrder = SortOrder.ASCENDING) -> None:
         """Sort the table
@@ -276,8 +188,7 @@ class DataTable(Ui_DataTable, BaseController):
         
         self._page = page
         self.pageSpinBox.setValue(page)
-        self._updateVisibleRows()
-        self._updateCurrentPageButton()
+        self._updatePagination()
         self.pageChanged.emit(page)
     
     def setRowsPerPage(self, rows: int) -> None:
@@ -434,7 +345,10 @@ class DataTable(Ui_DataTable, BaseController):
     def _updatePagination(self) -> None:
         """Update pagination controls"""
         total_rows = len(self._model._data)
-        
+        startRange = (self._page - 1) * self._rows_per_page
+        stopRange = min(total_rows, (self._page * self._rows_per_page))
+        if self._proxy_model:
+            self._proxy_model.setPaginationRange(startRange, stopRange)
         if total_rows == 0:
             self._total_pages = 1
         else:

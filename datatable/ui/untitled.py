@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'untitled.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.9.0
+## Created by: Qt User Interface Compiler version 6.10.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -26,6 +26,13 @@ class Ui_DataTable(object):
     def setupUi(self, DataTable):
         if not DataTable.objectName():
             DataTable.setObjectName(u"DataTable")
+        DataTable.setStyleSheet(u"QPushButton:hover {\n"
+"    background-color: #3e3e42;\n"
+"}\n"
+"\n"
+"QPushButton:pressed {\n"
+"    background-color: #007acc;\n"
+"}")
         DataTable.resize(830, 545)
         DataTable.setMinimumSize(QSize(640, 480))
         DataTable.setStyleSheet(u"")
@@ -64,11 +71,11 @@ class Ui_DataTable(object):
 
         self.top_toolbar.addWidget(self.searchLabel)
 
-        self.searchLineEdit = QLineEdit(DataTable)
-        self.searchLineEdit.setObjectName(u"searchLineEdit")
-        self.searchLineEdit.setMinimumSize(QSize(200, 0))
+        self.searchInput = QLineEdit(DataTable)
+        self.searchInput.setObjectName(u"searchInput")
+        self.searchInput.setMinimumSize(QSize(200, 0))
 
-        self.top_toolbar.addWidget(self.searchLineEdit)
+        self.top_toolbar.addWidget(self.searchInput)
 
         self.typeComboBox = QComboBox(DataTable)
         self.typeComboBox.addItem("")
@@ -166,13 +173,6 @@ class Ui_DataTable(object):
 
         self.pushButton = QPushButton(self.pagesLayout)
         self.pushButton.setObjectName(u"pushButton")
-        self.pushButton.setStyleSheet(u"QPushButton:hover {\n"
-"    background-color: #3e3e42;\n"
-"}\n"
-"\n"
-"QPushButton:pressed {\n"
-"    background-color: #007acc;\n"
-"}")
 
         self._pagesLayout.addWidget(self.pushButton)
 

@@ -131,7 +131,7 @@ class DataTableHandler(Subscriber):
         
     def _apply_combined_filters(self):
         """Apply both text search and type filters together (AND condition)"""
-        search_term = self.widget_manager.get("searchLineEdit").text()
+        search_term = self.widget_manager.get("searchInput").text()
         type_index = self.widget_manager.get("typeComboBox").currentIndex()
         
         # Convert type index to DataType
@@ -146,52 +146,7 @@ class DataTableHandler(Subscriber):
         
         data_type = type_map.get(type_index)
         
-        # Apply filters to table
-        filtered_rows = []
         
-        # Only filter if we have a search term or data type filter
-        if search_term or (data_type is not None and type_index > 0):
-            model = self.table._model
-            
-            # Check each row
-            for row_idx, row_data in enumerate(model._data):
-                row_matches = True
-                
-                # Type filter: check if any column in this row has the specified data type
-                if data_type is not None and type_index > 0:
-                    type_match = False
-                    
-                    for col_key, col_type in model._column_types.items():
-                        if col_type == data_type and col_key in model._visible_columns:
-                            type_match = True
-                            break
-                    
-                    if not type_match:
-                        row_matches = False
-                
-                # Text search: check if any column contains the search term
-                if search_term and row_matches:
-                    search_match = False
-                    
-                    for col_key in model._visible_columns:
-                        value = row_data.get(col_key)
-                        
-                        # Use search function if available
-                        if col_key in model._search_funcs:
-                            if model._search_funcs[col_key](value, search_term):
-                                search_match = True
-                                break
-                        # Default text-based search
-                        elif value is not None and search_term.lower() in str(value).lower():
-                            search_match = True
-                            break
-                    
-                    if not search_match:
-                        row_matches = False
-                
-                # Add row to filtered list if it matches all conditions
-                if row_matches:
-                    filtered_rows.append(row_idx)
         
         # Apply filtering by setting visible rows on the model
         # Hoặc sử dụng proxy model nếu được triển khai
@@ -200,6 +155,52 @@ class DataTableHandler(Subscriber):
             self.table._proxy_model.setSearchTerm(search_term)
             self.table._proxy_model.setDataTypeFilter(data_type)
         else:
+            # Apply filters to table
+            filtered_rows = []
+            
+            # Only filter if we have a search term or data type filter
+            if search_term or (data_type is not None and type_index > 0):
+                model = self.table._model
+                
+                # Check each row
+                for row_idx, row_data in enumerate(model._data):
+                    row_matches = True
+                    
+                    # Type filter: check if any column in this row has the specified data type
+                    if data_type is not None and type_index > 0:
+                        type_match = False
+                        
+                        for col_key, col_type in model._column_types.items():
+                            if col_type == data_type and col_key in model._visible_columns:
+                                type_match = True
+                                break
+                        
+                        if not type_match:
+                            row_matches = False
+                    
+                    # Text search: check if any column contains the search term
+                    if search_term and row_matches:
+                        search_match = False
+                        
+                        for col_key in model._visible_columns:
+                            value = row_data.get(col_key)
+                            
+                            # Use search function if available
+                            if col_key in model._search_funcs:
+                                if model._search_funcs[col_key](value, search_term):
+                                    search_match = True
+                                    break
+                            # Default text-based search
+                            elif value is not None and search_term.lower() in str(value).lower():
+                                search_match = True
+                                break
+                        
+                        if not search_match:
+                            row_matches = False
+                    
+                    # Add row to filtered list if it matches all conditions
+                    if row_matches:
+                        filtered_rows.append(row_idx)
             # Hoặc áp dụng bộ lọc thông qua các phương thức có sẵn
             if hasattr(self.table, 'applyFilters'):
                 self.table.applyFilters(filtered_rows)
@@ -300,7 +301,8 @@ class DataTableHandler(Subscriber):
         """
         import inspect
         print("on_table_row_clicked", inspect.getframeinfo(inspect.currentframe()))
-        breakpoint()
+        import traceback
+        traceback.print_stack()
         if not index.isValid():
             return
             
