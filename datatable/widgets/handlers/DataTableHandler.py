@@ -231,6 +231,98 @@ class DataTableHandler(Subscriber):
         else:
             row = index.row()
 
+        # self.table.applyFilters(search_term, data_type)
+        # Apply filters to table
+        filtered_rows = []
+
+        # Only filter if we have a search term or data type filter
+        if search_term or (data_type is not None and type_index > 0):
+            model = self.table._model
+
+            # Check each row
+            for row_idx, row_data in enumerate(model._data):
+                row_matches = True
+
+                # Type filter: check if any column in this row has the specified data type
+                if data_type is not None and type_index > 0:
+                    type_match = False
+
+                    for col_key, col_type in model._column_types.items():
+                        if col_type == data_type and col_key in model._visible_columns:
+                            type_match = True
+                            break
+
+                    if not type_match:
+                        row_matches = False
+
+                # Text search: check if any column contains the search term
+                if search_term and row_matches:
+                    search_match = False
+
+                    for col_key in model._visible_columns:
+                        value = row_data.get(col_key)
+
+                        # Use search function if available
+                        if col_key in model._search_funcs:
+                            if model._search_funcs[col_key](value, search_term):
+                                search_match = True
+                                break
+                        # Default text-based search
+                        elif value is not None and search_term.lower() in str(value).lower():
+                            search_match = True
+                            break
+
+                    if not search_match:
+                        row_matches = False
+
+                # Add row to filtered list if it matches all conditions
+                if row_matches:
+                    filtered_rows.append(row_idx)
+
+        # Apply filtering by setting visible rows on the model
+        # Hoặc sử dụng proxy model nếu được triển khai
+        if hasattr(self.table._proxy_model, 'setSearchTerm') and hasattr(self.table._proxy_model, 'setDataTypeFilter'):
+            # Sử dụng proxy model nếu có các phương thức phù hợp
+            self.table._proxy_model.setSearchTerm(search_term)
+            self.table._proxy_model.setDataTypeFilter(data_type)
+        else:
+            # Hoặc áp dụng bộ lọc thông qua các phương thức có sẵn
+            if hasattr(self.table, 'applyFilters'):
+                self.table.applyFilters(filtered_rows)
+            elif hasattr(self.table, '_applySearch'):
+                self.table._applySearch(search_term)
+                # Không có cách trực tiếp để áp dụng bộ lọc loại
+
+        # Reset page to 1 when filter changes
+        self.table._page = 1
+        self.widget_manager.get('pageSpinBox').setValue(1)
+        self.table._updatePagination()
+    
+    def on_table_row_clicked(self, index, data: Dict[str, Any] = None):
+        """Handle table row clicked
+
+        Args:
+            index: Model index
+            data: Event data
+        """
+        if not index.isValid():
+            return
+
+        # Map proxy index to source index
+        if hasattr(self.table, '_proxy_model') and self.table._proxy_model:
+            source_index = self.table._proxy_model.mapToSource(index)
+            row = source_index.row()
+        else:
+            row = index.row()
+
+        # Check if it's the expand/collapse column and the first column
+        if index.column() == 0 and self.table._model._row_collapsing_enabled:
+            if self.table._model.isRowCollapsable(row):
+                self.table._model.toggleRowExpanded(row)
+                return
+
+        # Emit signal
+        self.table.rowSelected.emit(row, self.table._model._data[row])
         # Check if it's the expand/collapse column and the first column
         if index.column() == 0 and self.table._model._row_collapsing_enabled:
             if self.table._model.isRowCollapsable(row):
