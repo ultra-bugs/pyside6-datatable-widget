@@ -358,7 +358,7 @@ class DataTable(Ui_DataTable, BaseController):
         Returns:
             List of selected row data dictionaries
         """
-        indexes = self.tableView.selectionModel().selectedRows()
+        indexes = self.tableView.selectionModel().selectedIndexes()
         if not indexes:
             return []
 
