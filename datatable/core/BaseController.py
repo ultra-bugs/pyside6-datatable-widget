@@ -12,22 +12,8 @@
 #                      *    -  -  All Rights Reserved  -  -    *
 #                      * * * * * * * * * * * * * * * * * * * * *
 
-#              M""""""""`M            dP
-#              Mmmmmm   .M            88
-#              MMMMP  .MMM  dP    dP  88  .dP   .d8888b.
-#              MMP  .MMMMM  88    88  88888"    88'  `88
-#              M' .MMMMMMM  88.  .88  88  `8b.  88.  .88
-#              M         M  `88888P'  dP   `YP  `88888P'
-#              MMMMMMMMMMM    -*-  Created by Zuko  -*-
-#
-#              * * * * * * * * * * * * * * * * * * * * *
-#              * -    - -   F.R.E.E.M.I.N.D   - -    - *
-#              * -  Copyright © 2025 (Z) Programing  - *z
-#              *    -  -  All Rights Reserved  -  -    *
-#              * * * * * * * * * * * * * * * * * * * * *
-
-#
 import importlib
+import traceback
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any
 
@@ -75,7 +61,6 @@ class BaseController(QWidget, ABC, metaclass=ControllerMeta):
             # Try to find handler in the same package
             base_module = '.'.join(module_parts[:-1])
             handler_module_name = f'{base_module}.handlers.{self.controller_name}Handler'
-            print(handler_module_name)
             try:
                 handler_module = importlib.import_module(handler_module_name)
                 handler_class = getattr(handler_module, f'{self.controller_name}Handler')
@@ -111,11 +96,12 @@ class BaseController(QWidget, ABC, metaclass=ControllerMeta):
                 try:
                     widget = self.widget_manager.get(signal_info[0])
                     self.publisher.connect(widget, signal_info[1], event, data={'widget': widget})
-                    print(f'Connected {signal_info[1]} signal to {event} event')
-                    print(widget, event, signal_info)
+                    # print(f'Connected {signal_info[1]} signal to {event} event')
+                    # print(widget, event, signal_info)
                 except (AttributeError, Exception) as e:
                     print(f'Error connecting signal: {e}')
-                    print(event, signal_info)
+                    print(traceback.format_exc())
+                    # print(event, signal_info)
                     continue
 
                 self.publisher.subscribe(subscriber=subscriber, event=event)

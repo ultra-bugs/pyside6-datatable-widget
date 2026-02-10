@@ -1,0 +1,16 @@
+[workspace]
+authors = ["Zuko <tansautn@gmail.com>"]
+channels = ["conda-forge"]
+name = "pyside6-datatable-widget"
+platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
+version = "1.0.0"
+
+[tasks]
+
+[dependencies]
+python = ">=3.10,<3.14"
+pyside6 = ">=6.10.1,<7"
+loguru = "*"
+
+[pypi-dependencies]
+better-exceptions = "*"
