@@ -48,6 +48,81 @@ jobs:
         run: |
           find . -type f -name '*.py' -exec sed -i '/breakpoint()/d' {} +
 
+      - name: Update CHANGELOG.md
+        shell: bash
+        run: |
+          set -e
+          today=$(date +%Y-%m-%d)
+
+          # Get last release tag (exclude dev- tags)
+          last_release_tag=$(git tag --list --sort=-version:refname | grep -v "^dev-" | head -n2 | tail -n1 || true)
+
+          # Get commits since last release (newest first)
+          if [[ -z "$last_release_tag" ]]; then
+            raw_log=$(git log --pretty=format:'- %s (%h)')
+          else
+            raw_log=$(git log "${last_release_tag}..HEAD" --pretty=format:'- %s (%h)')
+          fi
+
+          # Filter self-generated commits and escape Markdown
+          git_log=$(echo "$raw_log" | grep -v "chore(changelog):" | sed -e 's/_/\\_/g' -e 's/\*/\\*/g' -e 's/#/\\#/g' -e 's/`/\\`/g')
+
+          if [[ -z "$git_log" ]]; then
+            git_log="- No notable changes"
+          fi
+
+          if [[ ! -f CHANGELOG.md ]]; then
+            echo "# Changelog" > CHANGELOG.md
+            echo "" >> CHANGELOG.md
+          fi
+
+          tmp=$(mktemp)
+
+          # Remove dev section if exists
+          sed '/<!-- DEV_CHANGELOG_START -->/,/<!-- DEV_CHANGELOG_END -->/d' CHANGELOG.md > "$tmp"
+
+          # Add new release section at top (after "# Changelog")
+          tmp2=$(mktemp)
+          awk -v header="## [${VERSION}] - ${today}" -v changelog="$git_log" '
+            NR==1 { print; next }
+            NR==2 && /^$/ { print; print header; print ""; print changelog; print ""; next }
+            NR==2 { print header; print ""; print changelog; print ""; print; next }
+            { print }
+          ' "$tmp" > "$tmp2"
+          mv "$tmp2" CHANGELOG.md
+          rm -f "$tmp"
+
+      - name: Update README.md Versions table
+        shell: bash
+        run: |
+          set -e
+          today=$(date +%Y-%m-%d)
+          if ! grep -q "^| Version | Date | Notes |$" README.md 2>/dev/null; then
+            printf "\n## Versions - Current Release State\n\n| Version | Date | Notes |\n|---|---|---|\n" >> README.md
+          fi
+          tmp=$(mktemp)
+          awk -v ver="${VERSION}" -v date="$today" '
+            BEGIN{printed=0}
+            {
+              print $0
+              if ($0 ~ /^\| Version \| Date \| Notes \|$/ && printed==0) {
+                getline
+                print $0
+                print "| " ver " | " date " | - |"
+                count=0
+                while (getline) {
+                  if ($0 ~ /^\|/){
+                    count++
+                    if (count<=8) print $0
+                  } else { print $0 }
+                }
+                printed=1
+                exit
+              }
+            }
+          ' README.md > "$tmp"
+          mv "$tmp" README.md
+
       - name: Build release distributions
         run: |
           # NOTE: put your own distribution build steps here.
@@ -58,7 +133,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add setup.py datatable/__init__.py
+          git add setup.py datatable/__init__.py CHANGELOG.md README.md
           git commit -m "chore: bump version to $VERSION [GitHub Actions]"
           git push origin HEAD:main
 

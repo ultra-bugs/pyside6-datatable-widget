@@ -22,6 +22,11 @@ A powerful DataTable widget for PySide6 applications with functionality similar 
 ```bash
 pip install pyside6-datatable-widget
 ```
+## Versions - Current Release State
+
+| Version | Date | Notes |
+|---|---|---|
+
 
 ## Basic Usage
 
