@@ -47,7 +47,6 @@ class PythonHelper:
             return False
 
 
-@singleton
 class Publisher:
     """Publisher (Subject) in Observer pattern"""
 
@@ -107,11 +106,8 @@ class Subscriber:
     def __init__(self, events: List[str]):
         self.events = events
         self.is_global_subscriber = False
-
-        # Auto-subscribe to events
-        publisher = Publisher()
-        for event in events:
-            publisher.subscribe(self, event)
+        # NOTE: subscription is handled by BaseController._connect_signals
+        # Each controller owns its own Publisher instance (no singleton).
 
     def update(self, event: str, *args, **kwargs):
         """Handle an event using smart parameter injection with type hint priority"""
