@@ -23,7 +23,7 @@ with open('README.md', 'r', encoding='utf-8') as fh:
 
 setup(
     name='pyside6-datatable-widget',
-    version='1.1.0.6',
+    version="1.2.0",
     author='Zuko',
     author_email='tansautn@gmail.com',
     description='A PySide6 DataTable widget with jQuery DataTable-like functionality',
