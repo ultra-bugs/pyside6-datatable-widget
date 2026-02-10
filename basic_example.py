@@ -12,21 +12,6 @@
 #                      *    -  -  All Rights Reserved  -  -    *
 #                      * * * * * * * * * * * * * * * * * * * * *
 
-#              M""""""""`M            dP
-#              Mmmmmm   .M            88
-#              MMMMP  .MMM  dP    dP  88  .dP   .d8888b.
-#              MMP  .MMMMM  88    88  88888"    88'  `88
-#              M' .MMMMMMM  88.  .88  88  `8b.  88.  .88
-#              M         M  `88888P'  dP   `YP  `88888P'
-#              MMMMMMMMMMM    -*-  Created by Zuko  -*-
-#
-#              * * * * * * * * * * * * * * * * * * * * *
-#              * -    - -   F.R.E.E.M.I.N.D   - -    - *
-#              * -  Copyright © 2026 (Z) Programing  - *
-#              *    -  -  All Rights Reserved  -  -    *
-#              * * * * * * * * * * * * * * * * * * * * *
-
-#
 import sys
 from pathlib import Path
 
@@ -41,6 +26,25 @@ from datatable import DataTable, DataType
 
 
 class ExampleWindow(QMainWindow):
+    def exampleGrouping(self):
+        columns = [('id', 'ID', DataType.NUMERIC), ('name', 'Name', DataType.STRING), ('total', 'total', DataType.NUMERIC)]
+        self.data_table.setColumns(columns)
+        self.mainLayout.addWidget(self.data_table)
+        # Enable row collapsing
+        self.data_table.enableRowCollapsing(True, 'subrows')
+
+        # Example data with subrows
+        data = [
+            {'id': 1, 'name': 'Category A', 'total': 1000, 'subrows': [{'id': 101, 'name': 'Item A1', 'total': 500}, {'id': 102, 'name': 'Item A2', 'total': 500}]},
+            {'id': 2, 'name': 'Category B', 'total': 2000, 'subrows': [{'id': 201, 'name': 'Item B1', 'total': 1200}, {'id': 202, 'name': 'Item B2', 'total': 800}]},
+        ]
+
+        self.data_table.setData(data)
+
+        # Connect expansion signals
+        self.data_table.rowExpanded.connect(lambda row, data: print(f'Row {row} expanded'))
+        self.data_table.rowCollapsed.connect(lambda row, data: print(f'Row {row} collapsed'))
+        return
     """Example window demonstrating DataTable usage"""
 
     def __init__(self):
@@ -53,48 +57,10 @@ class ExampleWindow(QMainWindow):
         # Central widget and layout
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        layout = QVBoxLayout(central_widget)
-
+        self.mainLayout = QVBoxLayout(central_widget)
         # Create DataTable
         self.data_table = DataTable()
-        columns = [
-            ('id', 'ID', DataType.NUMERIC),
-            ('name', 'Name', DataType.STRING),
-            ('total', 'total', DataType.NUMERIC),
-        ]
-        self.data_table.setColumns(columns)
-        layout.addWidget(self.data_table)
-        # Enable row collapsing
-        self.data_table.enableRowCollapsing(True, "subrows")
         
-        # Example data with subrows
-        data = [
-            {
-                "id": 1,
-                "name": "Category A",
-                "total": 1000,
-                "subrows": [
-                    {"id": 101, "name": "Item A1", "total": 500},
-                    {"id": 102, "name": "Item A2", "total": 500}
-                ]
-            },
-            {
-                "id": 2,
-                "name": "Category B",
-                "total": 2000,
-                "subrows": [
-                    {"id": 201, "name": "Item B1", "total": 1200},
-                    {"id": 202, "name": "Item B2", "total": 800}
-                ]
-            }
-        ]
-        
-        self.data_table.setData(data)
-        
-        # Connect expansion signals
-        self.data_table.rowExpanded.connect(lambda row, data: print(f"Row {row} expanded"))
-        self.data_table.rowCollapsed.connect(lambda row, data: print(f"Row {row} collapsed"))
-        return
 
         # Create sample data
         data = self._create_sample_data()
@@ -121,7 +87,7 @@ class ExampleWindow(QMainWindow):
 
         # Make the salary column sum visible at the bottom
         status_label = QLabel('Total Salary: $0')
-        layout.addWidget(status_label)
+        self.mainLayout.addWidget(status_label)
 
         # Update salary sum when data changes
         def update_salary_sum():

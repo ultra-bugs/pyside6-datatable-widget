@@ -13,6 +13,7 @@
 #                      * * * * * * * * * * * * * * * * * * * * *
 
 import importlib
+import traceback
 from abc import ABC, abstractmethod
 from typing import Dict, List, Any
 
@@ -60,7 +61,6 @@ class BaseController(QWidget, ABC, metaclass=ControllerMeta):
             # Try to find handler in the same package
             base_module = '.'.join(module_parts[:-1])
             handler_module_name = f'{base_module}.handlers.{self.controller_name}Handler'
-            print(handler_module_name)
             try:
                 handler_module = importlib.import_module(handler_module_name)
                 handler_class = getattr(handler_module, f'{self.controller_name}Handler')
@@ -96,11 +96,12 @@ class BaseController(QWidget, ABC, metaclass=ControllerMeta):
                 try:
                     widget = self.widget_manager.get(signal_info[0])
                     self.publisher.connect(widget, signal_info[1], event, data={'widget': widget})
-                    print(f'Connected {signal_info[1]} signal to {event} event')
-                    print(widget, event, signal_info)
+                    # print(f'Connected {signal_info[1]} signal to {event} event')
+                    # print(widget, event, signal_info)
                 except (AttributeError, Exception) as e:
                     print(f'Error connecting signal: {e}')
-                    print(event, signal_info)
+                    print(traceback.format_exc())
+                    # print(event, signal_info)
                     continue
 
                 self.publisher.subscribe(subscriber=subscriber, event=event)

@@ -1,9 +1,9 @@
 [workspace]
 authors = ["Zuko <tansautn@gmail.com>"]
 channels = ["conda-forge"]
-name = "pdw"
-platforms = ["win-64"]
-version = "0.1.0"
+name = "pyside6-datatable-widget"
+platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
+version = "1.0.0"
 
 [tasks]
 

@@ -25,6 +25,8 @@ from ..core.BaseController import BaseController
 from ..models.datatable_model import DataTableModel, DataType, SortOrder
 from ..models.delegates import BooleanDelegate, DateDelegate, NumericDelegate, ProgressDelegate, ProgressBarDelegate, IconBooleanDelegate
 from ..ui.untitled import Ui_DataTable
+from ..widgets.FilterState import FilterState
+from ..widgets.FilterFacade import FilterFacade
 from ..widgets.handlers.DataTableHandler import DataTableProxyModel
 
 
@@ -42,6 +44,7 @@ class DataTable(Ui_DataTable, BaseController):
     # Slot map
     slot_map = {
         'search_text_changed': ['searchInput', 'textChanged'],
+        'type_filter_changed': ['typeComboBox', 'currentIndexChanged'],
         'page_changed': ['pageSpinBox', 'valueChanged'],
         'rows_per_page_changed': ['rowsPerPageCombo', 'currentIndexChanged'],
         'next_page_clicked': ['nextPageButton', 'clicked'],
@@ -60,17 +63,24 @@ class DataTable(Ui_DataTable, BaseController):
     def __init__(self, parent=None):
         super().__init__(parent)
         self._model = DataTableModel(self)
-        self._proxyModel = DataTableProxyModel(self)
+
+        # Filter system: FilterState (single source of truth) + FilterFacade (orchestrator)
+        self._filterState = FilterState()
+        self._proxyModel = DataTableProxyModel(self._filterState, self)
         self._proxyModel.setSourceModel(self._model)
         self._proxyModel.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self._proxyModel.setDynamicSortFilter(False)  # Disable auto-sort to preserve grouping
 
-        self.tableView.setModel(self._proxyModel)
+        # Wire filteredCount to proxy's search+type-only count (excludes pagination)
+        self._filterState.setFilteredCountFn(self._proxyModel.countFilteredRows)
 
-        # Pagination state
-        self._page = 1
-        self._rows_per_page = 10
-        self._total_pages = 1
+        self._filterFacade = FilterFacade(
+            state=self._filterState,
+            invalidateProxy=self._proxyModel.invalidateAndRefresh,
+            onStateChanged=self._onFilterStateChanged,
+        )
+
+        self.tableView.setModel(self._proxyModel)
 
         # Column configurations for delegates
         self._column_configurations: Dict[str, Dict[str, Any]] = {}
@@ -80,7 +90,8 @@ class DataTable(Ui_DataTable, BaseController):
         self.rowsPerPageCombo.clear()
         self.rowsPerPageCombo.addItems(['10', '25', '50', '100'])
         self.rowsPerPageCombo.setCurrentText('25')
-        self._updatePagination()
+        self._filterState.itemsPerPage = 25
+        self._onFilterStateChanged()
         self.pageSpinBox.setVisible(False)
 
         # Preferences
@@ -181,7 +192,7 @@ class DataTable(Ui_DataTable, BaseController):
         # Apply delegates
         self._applyDelegates()
         # Update UI
-        self._updatePagination()
+        self._filterFacade.refresh()
         return self
 
     def setUiSelectionType(
@@ -225,6 +236,7 @@ class DataTable(Ui_DataTable, BaseController):
         """
         state = self._save_state()
         self._model.setModelData(data)
+        self._filterState.setRawData(self._model._data)
         
         # Hide all child rows initially if row collapsing is enabled
         if self._model._row_collapsing_enabled:
@@ -272,23 +284,16 @@ class DataTable(Ui_DataTable, BaseController):
         if self.searchInput.text() != term:
             self.searchInput.setText(term)
         else:
-            self.applyFilters(search_term=term)
+            self._filterFacade.setSearch(term)
         return self
 
     def applyFilters(self, search_term: Optional[str] = None, data_type: Optional[DataType] = None) -> 'DataTable':
         """Apply search and data type filters to the table."""
-        current_search = self._proxyModel._search_term
-        current_type = self._proxyModel._data_type_filter
-
-        new_search = search_term if search_term is not None else current_search
-        new_type = data_type if data_type is not None else current_type
-
-        self._proxyModel.setSearchTerm(new_search)
-        self._proxyModel.setDataTypeFilter(new_type)
-
-        # Reset pagination to the first page
-        self.setPage(1)
-        self._updatePagination()
+        if search_term is not None:
+            self._filterState.searchText = search_term
+        if data_type is not None:
+            self._filterState.dataTypeFilter = data_type
+        self._filterFacade.refresh()
         return self
 
     def sort(self, column_key: str, order: SortOrder = SortOrder.ASCENDING) -> 'DataTable':
@@ -311,15 +316,7 @@ class DataTable(Ui_DataTable, BaseController):
         Args:
             page: Page number (1-based)
         """
-        if page < 1 or page > self._total_pages:
-            # TODO: OutOfIndexException should i ?
-            return self
-
-        self._page = page
-        self.pageSpinBox.setValue(page)
-        self._updateVisibleRows()
-        self._updateCurrentPageButton()
-        self.pageChanged.emit(page)
+        self._filterFacade.setPage(page)
         return self
 
     def setRowsPerPage(self, rows: int) -> 'DataTable':
@@ -331,12 +328,11 @@ class DataTable(Ui_DataTable, BaseController):
         if rows not in [10, 25, 50, 100]:
             rows = 25
 
-        self._rows_per_page = rows
         index = self.rowsPerPageCombo.findText(str(rows))
         if index != -1:
             self.rowsPerPageCombo.setCurrentIndex(index)
 
-        self._updatePagination()
+        self._filterFacade.setItemsPerPage(rows)
         return self
 
     def getData(self) -> List[Dict[str, Any]]:
@@ -399,7 +395,8 @@ class DataTable(Ui_DataTable, BaseController):
         """
         success = self._model._insertRow(row_index, row_data)
         if success:
-            self._updatePagination()
+            self._filterState.setRawData(self._model._data)
+            self._filterFacade.refresh()
         return success
 
     def appendRow(self, row_data: Dict[str, Any]) -> bool:
@@ -413,7 +410,8 @@ class DataTable(Ui_DataTable, BaseController):
         """
         success = self._model.appendRow(row_data)
         if success:
-            self._updatePagination()
+            self._filterState.setRawData(self._model._data)
+            self._filterFacade.refresh()
         return success
 
     def setIntegerDisplay(self, show_without_decimals: bool) -> 'DataTable':
@@ -507,8 +505,8 @@ class DataTable(Ui_DataTable, BaseController):
     def _onModelReset(self) -> None:
         """Handle model reset"""
         self._applyDelegates()
-        self._updatePagination()
-        # self.statusLabel.setText(f'Total entries: {len(self._model._data)}')
+        self._filterState.setRawData(self._model._data)
+        self._filterFacade.refresh()
 
     def _onRowExpandedCollapsed(self, row: int, isExpanded: bool) -> None:
         """Handle row expanded/collapsed
@@ -537,7 +535,7 @@ class DataTable(Ui_DataTable, BaseController):
             self.rowCollapsed.emit(row, self._model._data[row])
         
         # Update pagination (visible row count may have changed)
-        self._updatePagination()
+        self._filterFacade.refresh()
     
     def _hideAllChildRows(self) -> None:
         """Hide all child rows initially"""
@@ -600,82 +598,72 @@ class DataTable(Ui_DataTable, BaseController):
                 if sub_layout is not None:
                     self.clearLayout(sub_layout)
 
-    def _updatePagination(self) -> None:
-        """Update pagination controls"""
-        # Use filtered row count
-        total_rows = self._proxyModel.rowCount()
+    def _onFilterStateChanged(self) -> None:
+        '''Unified UI callback: rebuild pagination buttons and update labels.
 
-        if total_rows == 0:
-            self._total_pages = 1
-        else:
-            self._total_pages = (total_rows + self._rows_per_page - 1) // self._rows_per_page
+        Called by FilterFacade whenever state changes.
+        '''
+        state = self._filterState
+        totalPages = state.totalPages
+        currentPage = state.currentPage
+        filteredCount = state.filteredCount
 
-        self.pageSpinBox.setMaximum(self._total_pages)
-        # self.totalPagesLabel.setText(f'of {self._total_pages}')
+        self.pageSpinBox.setMaximum(totalPages)
 
-        # Ensure current page is valid
-        if self._page > self._total_pages:
-            self._page = self._total_pages
-
-            # self.pageSpinBox.setValue(self._page)
+        # Rebuild page buttons
         self.clearLayout(self._pagesLayout)
 
-        for range_ in range(self._page - 3, self._total_pages + self._page + 3):
-            if range_ < 1 or range_ > self._total_pages:
+        for pageNum in range(currentPage - 3, totalPages + currentPage + 3):
+            if pageNum < 1 or pageNum > totalPages:
                 continue
 
-            self.__setattr__(f'page{range_}Button', QPushButton(str(range_)))
-            self._pagesLayout.addWidget(self.__getattribute__(f'page{range_}Button'))
-            if range_ == self._page:
-                self.__getattribute__(f'page{range_}Button').setEnabled(False)
-            if range_ == self._page + 3 and range_ < self._total_pages:
+            self.__setattr__(f'page{pageNum}Button', QPushButton(str(pageNum)))
+            self._pagesLayout.addWidget(self.__getattribute__(f'page{pageNum}Button'))
+            if pageNum == currentPage:
+                self.__getattribute__(f'page{pageNum}Button').setEnabled(False)
+            if pageNum == currentPage + 3 and pageNum < totalPages:
                 self._pagesLayout.addWidget(QPushButton('...'))
-        # Update visible rows
-        self._updateVisibleRows()
-        self._updateFirstLastVisible()
-        self._updateCurrentPageButton()
 
-    def _updateCurrentPageButton(self):
-        """Update current page button"""
-        for i in range(1, self._total_pages + 1):
-            if self.__getattribute__(f'page{i}Button') is None:
-                continue
-            button = self.__getattribute__(f'page{i}Button')
-            if button:
-                if not button.property('isChangePageConnected'):
-                    button.setProperty('isChangePageConnected', True)
-                    button.clicked.connect(lambda _, page=i: self.setPage(page))
-                button.setEnabled(i != self._page)
-                if i == self._page:
-                    button.setStyleSheet('background-color: #007acc;')
-                    button.setEnabled(False)
-                else:
-                    button.setStyleSheet('')
-                    button.setEnabled(True)
-
-    def _updateFirstLastVisible(self):
-        if self._page == 1:
-            self.backwardLayout.setVisible(False)
-        else:
-            if self._page == self._total_pages or self._total_pages == 1:
-                self.fowardLayout.setVisible(False)
-
-    def _updateVisibleRows(self) -> None:
-        """Update which rows are visible based on pagination"""
-        totalFiltered = self._proxyModel.rowCount()
-
-        if totalFiltered == 0:
+        # Update entries labels
+        if filteredCount == 0:
             self.displayingEntriesLbl.setText('0')
             self.totalEntriesLbl.setText('0')
-            self._proxyModel.disablePagination()
-            return
+        else:
+            start, end = state.paginationRange
+            self.displayingEntriesLbl.setText(f'{start + 1} - {end}')
+            self.totalEntriesLbl.setText(str(filteredCount))
 
-        start = (self._page - 1) * self._rows_per_page
-        end = min(start + self._rows_per_page, totalFiltered)
+        self._updateFirstLastVisible()
+        self._updateCurrentPageButton()
+        self.pageChanged.emit(currentPage)
 
-        self.displayingEntriesLbl.setText(f'{start + 1} - {end}')
-        self.totalEntriesLbl.setText(str(totalFiltered))
-        self._proxyModel.setPaginationRange(start, end)
+    def _updateCurrentPageButton(self):
+        '''Update current page button styling and connections.'''
+        state = self._filterState
+        for i in range(1, state.totalPages + 1):
+            btn = getattr(self, f'page{i}Button', None)
+            if btn is None:
+                continue
+            if not btn.property('isChangePageConnected'):
+                btn.setProperty('isChangePageConnected', True)
+                btn.clicked.connect(lambda _, page=i: self._filterFacade.setPage(page))
+            if i == state.currentPage:
+                btn.setStyleSheet('background-color: #007acc;')
+                btn.setEnabled(False)
+            else:
+                btn.setStyleSheet('')
+                btn.setEnabled(True)
+
+    def _updateFirstLastVisible(self):
+        state = self._filterState
+        if state.currentPage == 1:
+            self.backwardLayout.setVisible(False)
+        else:
+            self.backwardLayout.setVisible(True)
+        if state.currentPage == state.totalPages or state.totalPages == 1:
+            self.fowardLayout.setVisible(False)
+        else:
+            self.fowardLayout.setVisible(True)
 
     def _setupHeaderContextMenu(self) -> None:
         """Setup context menu for header"""
