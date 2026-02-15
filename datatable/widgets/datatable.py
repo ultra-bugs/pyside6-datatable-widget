@@ -234,15 +234,20 @@ class DataTable(Ui_DataTable, BaseController):
         Args:
             data: List of row data dictionaries
         """
-        state = self._save_state()
-        self._model.setModelData(data)
-        self._filterState.setRawData(self._model._data)
-        
-        # Hide all child rows initially if row collapsing is enabled
-        if self._model._row_collapsing_enabled:
-            self._hideAllChildRows()
-        
-        self._restore_state(state)
+        try:
+            state = self._save_state()
+            self._model.setModelData(data)
+            self._filterState.setRawData(self._model._data)
+            
+            # Hide all child rows initially if row collapsing is enabled
+            if self._model._row_collapsing_enabled:
+                self._hideAllChildRows()
+            
+            self._restore_state(state)
+        except RuntimeError as e:
+            if "signal" in str(e).lower() or "c++" in str(e).lower():
+                pass
+            raise
         return self
 
     def setColumns(self, columns: List[Tuple[str, str, DataType]]) -> 'DataTable':
