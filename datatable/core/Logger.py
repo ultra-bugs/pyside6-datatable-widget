@@ -11,7 +11,6 @@
 #                  * -  Copyright © 2026 (Z) Programing  - *
 #                  *    -  -  All Rights Reserved  -  -    *
 #                  * * * * * * * * * * * * * * * * * * * * *
-
 import sys
 from functools import wraps
 

@@ -11,10 +11,6 @@
 #                      * -  Copyright © 2026 (Z) Programing  - *
 #                      *    -  -  All Rights Reserved  -  -    *
 #                      * * * * * * * * * * * * * * * * * * * * *
-
-
-#
-#
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from PySide6.QtCore import QPoint, Qt, Signal, QTimer, QItemSelectionModel, QEvent
@@ -504,6 +500,21 @@ class DataTable(Ui_DataTable, BaseController):
             if isinstance(delegate, IconBooleanDelegate):
                 delegate.set_yes_color(QColor(yes_color))
                 delegate.set_no_color(QColor(no_color))
+        return self
+
+    def configureTableView(self, methodName: str, *args, **kwargs) -> 'DataTable':
+        '''Generic proxy: delegate any QTableView setter call by name.
+
+        Allows callers to configure the internal QTableView without coupling
+        to specific method names in the facade.
+
+        Example:
+            table.configureTableView('setSizeAdjustPolicy', QAbstractScrollArea.SizeAdjustPolicy.AdjustIgnored)
+            table.configureTableView('setShowGrid', False)
+        '''
+        method = getattr(self.tableView, methodName, None)
+        if callable(method):
+            method(*args, **kwargs)
         return self
 
     # Private methods

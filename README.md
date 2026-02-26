@@ -232,6 +232,18 @@ Main widget class that provides the UI and functionality.
 - `setProgressBarGradient(column_key, enabled) -> Self`: Enable/disable gradient for a progress bar column
 - `addProgressBarRange(column_key, min_pct, max_pct, color) -> Self`: Add a color range for a progress bar column
 - `setIconBooleanColors(column_key, yes_color, no_color) -> Self`: Set colors for an icon boolean column
+- `configureTableView(methodName, *args, **kwargs) -> Self`: Generic proxy — delegate any `QTableView` setter call by name, without coupling to a specific named facade method. Useful for one-off configurations that don't need a dedicated wrapper.
+
+```python
+from PySide6.QtWidgets import QAbstractScrollArea
+
+# Prevent row-count-driven sizeHint from expanding the parent window
+table.configureTableView('setSizeAdjustPolicy', QAbstractScrollArea.SizeAdjustPolicy.AdjustIgnored)
+
+# Other examples
+table.configureTableView('setShowGrid', False)
+table.configureTableView('setColumnWidth', 0, 120)
+```
 
 #### Signals
 

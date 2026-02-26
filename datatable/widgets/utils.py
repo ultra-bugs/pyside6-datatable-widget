@@ -11,9 +11,8 @@
 #                      * -  Copyright © 2026 (Z) Programing  - *
 #                      *    -  -  All Rights Reserved  -  -    *
 #                      * * * * * * * * * * * * * * * * * * * * *
-
-
-from PySide6.QtWidgets import QTableView, QWidget
+from PySide6.QtCore import QSize
+from PySide6.QtWidgets import QApplication, QTableView, QWidget
 
 
 class DatatableContainer(QWidget):
@@ -26,4 +25,15 @@ class DatatableContainer(QWidget):
 
 
 class DataTableView(QTableView):
-    pass
+    """QTableView subclass that caps sizeHint to available screen size.
+
+    Prevents row-count-driven size from propagating up and forcing the
+    parent window to resize when data changes.
+    """
+
+    def sizeHint(self) -> QSize:
+        screen = QApplication.primaryScreen()
+        if screen:
+            avail = screen.availableGeometry()
+            return QSize(avail.width(), avail.height())
+        return super().sizeHint()

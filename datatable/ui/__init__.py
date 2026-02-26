@@ -11,6 +11,5 @@
 #                      * -  Copyright © 2026 (Z) Programing  - *
 #                      *    -  -  All Rights Reserved  -  -    *
 #                      * * * * * * * * * * * * * * * * * * * * *
-
 # This file ensures that the ui directory is recognized as a Python package
 # and included in the distribution when publishing to PyPI.
