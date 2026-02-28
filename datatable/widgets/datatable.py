@@ -58,6 +58,30 @@ class DataTable(Ui_DataTable, BaseController):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._setupProxyAndModel()
+        self.tableView.setModel(self._proxyModel)
+
+        # Column configurations for delegates
+        self._column_configurations: Dict[str, Dict[str, Any]] = {}
+
+        self._connectModelSignals()._uiBehaviorSetup()
+        # Initialize pagination
+        self.rowsPerPageCombo.clear()
+        self.rowsPerPageCombo.addItems(['10', '25', '50', '100'])
+        self.rowsPerPageCombo.setCurrentText('25')
+        self._filterState.itemsPerPage = 25
+        self._onFilterStateChanged()
+        self.pageSpinBox.setVisible(False)
+
+        # Preferences
+        self._show_integers_without_decimals = True
+    def getModelInstance(self) -> 'DataTableModel':
+        return self._model
+    def getProxyModelInstance(self) -> 'DataTableProxyModel':
+        return self._proxyModel
+    def getFilterStateInstance(self):
+        return self._filterState
+    def _setupProxyAndModel(self):
         self._model = DataTableModel(self)
 
         # Filter system: FilterState (single source of truth) + FilterFacade (orchestrator)
@@ -75,24 +99,6 @@ class DataTable(Ui_DataTable, BaseController):
             invalidateProxy=self._proxyModel.invalidateAndRefresh,
             onStateChanged=self._onFilterStateChanged,
         )
-
-        self.tableView.setModel(self._proxyModel)
-
-        # Column configurations for delegates
-        self._column_configurations: Dict[str, Dict[str, Any]] = {}
-
-        self._connectModelSignals()._uiBehaviorSetup()
-        # Initialize pagination
-        self.rowsPerPageCombo.clear()
-        self.rowsPerPageCombo.addItems(['10', '25', '50', '100'])
-        self.rowsPerPageCombo.setCurrentText('25')
-        self._filterState.itemsPerPage = 25
-        self._onFilterStateChanged()
-        self.pageSpinBox.setVisible(False)
-
-        # Preferences
-        self._show_integers_without_decimals = True
-
     def _connectModelSignals(self):
         self._model.modelReset.connect(self._onModelReset)
         self._model.rowExpandedCollapsed.connect(self._onRowExpandedCollapsed)
@@ -132,11 +138,11 @@ class DataTable(Ui_DataTable, BaseController):
 
     def selectInverse(self):
         """Invert current selection"""
-        rows = self._paginationModel.rowCount()
+        rows = self.getProxyModelInstance().rowCount()
         selection_model = self.tableView.selectionModel()
 
         for row in range(rows):
-            index = self._paginationModel.index(row, 0)
+            index = self.getProxyModelInstance().index(row, 0)
             selection_model.select(index, QItemSelectionModel.Toggle | QItemSelectionModel.Rows)
         return self
 
@@ -363,12 +369,15 @@ class DataTable(Ui_DataTable, BaseController):
         if not indexes:
             return []
 
+        seenRows = set()
         selectedData = []
         for index in indexes:
             # Map view (proxy) index to source model
             sourceIndex = self._proxyModel.mapToSource(index)
             modelRow = sourceIndex.row()
-            selectedData.append(self._model._data[modelRow])
+            if modelRow not in seenRows:
+                seenRows.add(modelRow)
+                selectedData.append(self._model._data[modelRow])
 
         return selectedData
 
