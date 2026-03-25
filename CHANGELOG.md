@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1] - 2026-03-25
+
+- Avoid runtime error when c++ model class deleted (dcddd5d)
+- Fix loguru use Camelcase for Base components (442d561)
+- Add `configureTableView` for flexible QTableView configuration, improve `sizeHint` to cap size based on screen dimensions, and clean up redundant blank lines. (d007cec)
+- Avoid runtime error when c++ model class deleted (d5ed86d)
+- chore: bump version to 1.2.0 [GitHub Actions] (b0d370c)
+
 ## [1.2.0] - 2026-02-10
 
 - Fix event wiring on multiple instances - same app case (6bcda57)
