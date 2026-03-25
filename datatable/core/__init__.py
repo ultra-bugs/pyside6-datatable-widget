@@ -11,8 +11,6 @@
 #                      * -  Copyright © 2026 (Z) Programing  - *
 #                      *    -  -  All Rights Reserved  -  -    *
 #                      * * * * * * * * * * * * * * * * * * * * *
-
-
 from .Observer import Publisher, Subscriber, singleton
 from .WidgetManager import WidgetManager
 

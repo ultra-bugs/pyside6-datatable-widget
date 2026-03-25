@@ -11,7 +11,6 @@
 #                      * -  Copyright © 2026 (Z) Programing  - *
 #                      *    -  -  All Rights Reserved  -  -    *
 #                      * * * * * * * * * * * * * * * * * * * * *
-
 import importlib
 import traceback
 from abc import ABC, abstractmethod
@@ -43,8 +42,8 @@ class BaseController(QWidget, ABC, metaclass=ControllerMeta):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.widget_manager = WidgetManager(self)
-        self.controller_name = self.__class__.__name__
+        self.widgetManager = WidgetManager(self)
+        self.controllerName = self.__class__.__name__
         self.publisher = Publisher()
         self.handler = None
 
@@ -60,11 +59,11 @@ class BaseController(QWidget, ABC, metaclass=ControllerMeta):
         if len(module_parts) > 1:
             # Try to find handler in the same package
             base_module = '.'.join(module_parts[:-1])
-            handler_module_name = f'{base_module}.handlers.{self.controller_name}Handler'
+            handler_module_name = f'{base_module}.handlers.{self.controllerName}Handler'
             try:
                 handler_module = importlib.import_module(handler_module_name)
-                handler_class = getattr(handler_module, f'{self.controller_name}Handler')
-                self.handler = handler_class(widget_manager=self.widget_manager, events=list(self.slot_map.keys()))
+                handler_class = getattr(handler_module, f'{self.controllerName}Handler')
+                self.handler = handler_class(widgetManager=self.widgetManager, events=list(self.slot_map.keys()))
             except (ImportError, AttributeError):
                 # If not found, try alternative locations
                 pass
@@ -94,7 +93,7 @@ class BaseController(QWidget, ABC, metaclass=ControllerMeta):
                     continue
 
                 try:
-                    widget = self.widget_manager.get(signal_info[0])
+                    widget = self.widgetManager.get(signal_info[0])
                     self.publisher.connect(widget, signal_info[1], event, data={'widget': widget})
                     # print(f'Connected {signal_info[1]} signal to {event} event')
                     # print(widget, event, signal_info)

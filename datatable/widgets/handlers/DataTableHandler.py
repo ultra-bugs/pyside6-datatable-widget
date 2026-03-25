@@ -147,11 +147,11 @@ class DataTableHandler(Subscriber):
         5: DataType.BOOLEAN,
     }
 
-    def __init__(self, widget_manager: WidgetManager, events: list):
+    def __init__(self, widgetManager: WidgetManager, events: list):
         super().__init__(events)
-        self.widget_manager = widget_manager
+        self.widgetManager = widgetManager
         from ... import DataTable
-        self.table: DataTable = widget_manager.controller
+        self.table: DataTable = widgetManager.controller
 
     def on_selection_changed(self, selected: QItemSelectionModel, deselected: QItemSelectionModel):
         '''Handle selection changes.'''
@@ -198,7 +198,7 @@ class DataTableHandler(Subscriber):
 
     def on_rows_per_page_changed(self, index: int, data: Dict[str, Any] = None):
         '''Handle rows-per-page combobox changed → parse value, delegate to Facade.'''
-        combo = self.widget_manager.get('rowsPerPageCombo')
+        combo = self.widgetManager.get('rowsPerPageCombo')
         try:
             rows = int(combo.currentText())
             self.table._filterFacade.setItemsPerPage(rows)
@@ -242,7 +242,7 @@ class DataTableHandler(Subscriber):
 
     def on_column_visibility_changed(self, data: Dict[str, Any] = None):
         '''Handle column visibility button clicked.'''
-        button = self.widget_manager.get('columnVisibilityButton')
+        button = self.widgetManager.get('columnVisibilityButton')
         menu = QMenu(self.table)
 
         for i, key in enumerate(self.table._model._column_keys):
@@ -262,7 +262,7 @@ class DataTableHandler(Subscriber):
 
     def on_page_number_clicked(self, data: Dict[str, Any] = None):
         '''Handle page number button clicked.'''
-        sender = self.widget_manager.sender()
+        sender = self.widgetManager.sender()
         if sender:
             try:
                 page = int(sender.text())

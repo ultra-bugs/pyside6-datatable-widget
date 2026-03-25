@@ -11,10 +11,6 @@
 #                      * -  Copyright © 2026 (Z) Programing  - *
 #                      *    -  -  All Rights Reserved  -  -    *
 #                      * * * * * * * * * * * * * * * * * * * * *
-
-
-
-#
 from typing import Any, Optional
 
 from PySide6.QtCore import QModelIndex, Qt, QDateTime, QSize, QRectF, QByteArray, QPoint
