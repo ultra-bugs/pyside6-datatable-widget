@@ -27,6 +27,7 @@ pip install pyside6-datatable-widget
 
 | Version | Date | Notes |
 |---|---|---|
+| 1.2.1 | 2026-03-25 | - |
 | 1.2.0 | 2026-02-10 | - |
 
 
