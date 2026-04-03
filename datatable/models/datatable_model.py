@@ -29,6 +29,7 @@ class DataType(Enum):
     CUSTOM = auto()
     PROGRESS_BAR = auto()  # New type for ProgressBarDelegate
     ICON_BOOLEAN = auto()  # New type for IconBooleanDelegate
+    ACTION_BUTTONS = auto()  # Inline action buttons per row
 
 
 class SortOrder(Enum):
@@ -50,6 +51,7 @@ class DataTableModel(QAbstractTableModel):
         self._headers: List[str] = []
         self._column_keys: List[str] = []
         self._column_types: Dict[str, DataType] = {}
+        self._header_map: Dict[str, str] = {}  # key -> original header text (permanent)
         self._formatting_funcs: Dict[str, Callable] = {}
         self._editable_columns: Dict[str, bool] = {}
         self._visible_columns: List[str] = []
@@ -226,12 +228,14 @@ class DataTableModel(QAbstractTableModel):
         self._headers = []
         self._column_keys = []
         self._column_types = {}
+        self._header_map = {}
         self._visible_columns = []
 
         for key, header, data_type in columns:
             self._headers.append(header)
             self._column_keys.append(key)
             self._column_types[key] = data_type
+            self._header_map[key] = header  # persistent mapping
             self._visible_columns.append(key)
 
             # Set default formatting functions based on type
@@ -290,21 +294,8 @@ class DataTableModel(QAbstractTableModel):
         self.beginResetModel()
         self._visible_columns = visible_columns.copy()
 
-        # Reorder and rebuild headers to match visible columns
-        new_headers = []
-        for col in visible_columns:
-            try:
-                idx = self._column_keys.index(col)
-                if idx < len(self._headers):
-                    new_headers.append(self._headers[idx])
-                else:
-                    # Fallback to using the column key as header
-                    new_headers.append(col)
-            except ValueError:
-                # This should not happen due to the validation above
-                new_headers.append(col)
-
-        self._headers = new_headers
+        # Rebuild headers using permanent _header_map (avoids truncation bug)
+        self._headers = [self._header_map.get(col, col) for col in visible_columns]
 
         self.endResetModel()
 

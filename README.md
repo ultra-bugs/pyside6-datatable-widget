@@ -11,10 +11,11 @@ A powerful DataTable widget for PySide6 applications with functionality similar 
 - **Row Collapsing**: Support for expandable/collapsible rows
 - **Pagination**: Built-in pagination with configurable page sizes [SEMI-IMPLEMENTED]
 - **Column Visibility**: Show/hide columns easily
+- **Row Numbering**: Show/hide vertical row numbers
 - **Aggregation Functions**: Calculate sums, averages, percentages, etc. [SEMI-IMPLEMENTED]
 - **Custom Formatting**: Format data display for different column types
 - **Observer Pattern**: Event-driven architecture for clear code organization
-- **Builtin-Delegates**: Packages has some useful delegates built-in for popular datatypes
+- **Builtin-Delegates**: Packages has some useful delegates built-in for popular datatypes (ProgressBar, IconBoolean, ActionButtons)
 - **Fluent-Interface**: Allow you channing calls on most methods of `DataTable` instance (return self)
 
 ## Installation
@@ -201,6 +202,38 @@ Displays boolean values using SVG icons instead of text or checkboxes.
 self.data_table.setIconBooleanColors('status', yes_color="#00FF00", no_color="#FF0000")
 ```
 
+### Action Buttons Delegate (`DataType.ACTION_BUTTONS`)
+
+Displays inline action buttons within a cell. Useful for per-row actions like Start, Stop, Delete, Edit, etc.
+
+- **Customization**:
+    - `setActionButtons(column_key, buttonDefs)`: Configure the buttons for the column. `buttonDefs` is a list of dictionaries.
+      ```python
+      # button_def dictionary structure:
+      {
+          "key": "action_id", 
+          "label": "Button Text", 
+          "color": "#HEX_COLOR", 
+          "visibleWhen": lambda row_data: True # optional visibility condition
+      }
+      ```
+- **Events**:
+    - The table emits `rowActionClicked(column_key, action_key, row_data)` when a button is clicked.
+
+```python
+# Setup Action Buttons
+button_defs = [
+    {"key": "start", "label": "▶ Start", "color": "#22c55e", "visibleWhen": lambda d: d.get('status') == 'PENDING'},
+    {"key": "stop", "label": "⏹ Stop", "color": "#ef4444", "visibleWhen": lambda d: d.get('status') == 'RUNNING'}
+]
+self.data_table.setActionButtons('actions', button_defs)
+
+# Connect to the signal
+self.data_table.rowActionClicked.connect(
+    lambda col, action, data: print(f"Action '{action}' clicked on column '{col}'")
+)
+```
+
 ## API Reference
 
 ### DataTable
@@ -224,6 +257,7 @@ Main widget class that provides the UI and functionality.
 - `getSelectedRow()`: Get selected row data
 - `getAggregateValue(column_key, agg_type)`: Get aggregate value for column
 - `setUiSelectionType(mode, behavior) -> Self`: Set selection mode and behavior for the table view
+- `showRowNumbers(enabled) -> Self`: Show or hide row numbers (vertical header)
 - `selectAll() -> Self`: This is fluent alias of `Model.selectAll()`
 - `selectNone() -> Self`: This is fluent alias of `Model.clearSelection()`
 - `clearSelection() -> Self`: This is fluent alias of `DataTable.selectNone()`
@@ -232,6 +266,7 @@ Main widget class that provides the UI and functionality.
 - `setProgressBarGradient(column_key, enabled) -> Self`: Enable/disable gradient for a progress bar column
 - `addProgressBarRange(column_key, min_pct, max_pct, color) -> Self`: Add a color range for a progress bar column
 - `setIconBooleanColors(column_key, yes_color, no_color) -> Self`: Set colors for an icon boolean column
+- `setActionButtons(column_key, buttonDefs) -> Self`: Configure inline action buttons for an ACTION_BUTTONS column
 - `configureTableView(methodName, *args, **kwargs) -> Self`: Generic proxy — delegate any `QTableView` setter call by name, without coupling to a specific named facade method. Useful for one-off configurations that don't need a dedicated wrapper.
 
 ```python
@@ -253,6 +288,8 @@ table.configureTableView('setColumnWidth', 0, 120)
 - `rowCollapsed(row, row_data)`: Emitted when row is collapsed
 - `dataFiltered(rows)`: Emitted when data is filtered
 - `sortChanged(column, order)`: Emitted when sort order changes
+- `selectionChanged(selected, deselected)`: Emitted when selection changes
+- `rowActionClicked(column_key, action_key, row_data)`: Emitted when an inline action button is clicked
 
 ### DataTableModel
 

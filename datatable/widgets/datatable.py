@@ -15,11 +15,11 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from PySide6.QtCore import QPoint, Qt, Signal, QTimer, QItemSelectionModel, QEvent
 from PySide6.QtGui import QAction, QColor, QCursor
-from PySide6.QtWidgets import QComboBox, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QPushButton, QSpinBox, QStyle, QTableView, QVBoxLayout
+from PySide6.QtWidgets import QAbstractItemView, QComboBox, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QMenu, QPushButton, QSpinBox, QStyle, QTableView, QVBoxLayout
 
 from ..core.BaseController import BaseController
 from ..models.datatable_model import DataTableModel, DataType, SortOrder
-from ..models.delegates import BooleanDelegate, DateDelegate, NumericDelegate, ProgressDelegate, ProgressBarDelegate, IconBooleanDelegate
+from ..models.delegates import BooleanDelegate, DateDelegate, NumericDelegate, ProgressDelegate, ProgressBarDelegate, IconBooleanDelegate, ActionButtonsDelegate
 from ..ui.untitled import Ui_DataTable
 from ..widgets.FilterState import FilterState
 from ..widgets.FilterFacade import FilterFacade
@@ -37,6 +37,7 @@ class DataTable(Ui_DataTable, BaseController):
     dataFiltered = Signal(list)
     sortChanged = Signal(str, SortOrder)
     selectionChanged = Signal(QItemSelectionModel, QItemSelectionModel)
+    rowActionClicked = Signal(str, str, dict)  # column_key, action_key, row_data
     # Slot map
     slot_map = {
         'search_text_changed': ['searchInput', 'textChanged'],
@@ -511,6 +512,33 @@ class DataTable(Ui_DataTable, BaseController):
                 delegate.set_no_color(QColor(no_color))
         return self
 
+    def setActionButtons(self, column_key: str, buttonDefs: list) -> 'DataTable':
+        """Configure inline action buttons for an ACTION_BUTTONS column.
+
+        Args:
+            column_key: Column key (must have DataType.ACTION_BUTTONS)
+            buttonDefs: List of button dicts — each has keys:
+                key (str), label (str), color (str),
+                visibleWhen (Callable(rowData)->bool, optional)
+        """
+        if column_key not in self._column_configurations:
+            self._column_configurations[column_key] = {}
+        self._column_configurations[column_key]['button_defs'] = buttonDefs
+
+        if column_key in self._model._visible_columns:
+            col_index = self._model._visible_columns.index(column_key)
+            delegate = ActionButtonsDelegate(column_key, buttonDefs, self)
+            self.tableView.setItemDelegateForColumn(col_index, delegate)
+        return self
+
+    def showRowNumbers(self, enabled: bool = True) -> 'DataTable':
+        """Show or hide row numbers (vertical header)."""
+        vHeader = self.tableView.verticalHeader()
+        vHeader.setVisible(enabled)
+        if enabled:
+            vHeader.setDefaultSectionSize(vHeader.minimumSectionSize())
+        return self
+
     def configureTableView(self, methodName: str, *args, **kwargs) -> 'DataTable':
         '''Generic proxy: delegate any QTableView setter call by name.
 
@@ -610,6 +638,13 @@ class DataTable(Ui_DataTable, BaseController):
                 if 'no_color' in config:
                     delegate.set_no_color(QColor(config['no_color']))
                 self.tableView.setItemDelegateForColumn(i, delegate)
+            elif data_type == DataType.ACTION_BUTTONS:
+                buttonDefs = self._column_configurations.get(col_key, {}).get('button_defs', [])
+                delegate = ActionButtonsDelegate(col_key, buttonDefs, self)
+                delegate.setParent(self)  # ensure parent is DataTable for signal emission
+                self.tableView.setItemDelegateForColumn(i, delegate)
+                # Allow mouse events to reach delegate for click detection
+                self.tableView.setEditTriggers(self.tableView.editTriggers() | QAbstractItemView.NoEditTriggers)
 
     def clearLayout(self, layout):
         while layout.count():

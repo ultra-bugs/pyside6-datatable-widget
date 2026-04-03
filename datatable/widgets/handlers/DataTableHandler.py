@@ -246,12 +246,7 @@ class DataTableHandler(Subscriber):
         menu = QMenu(self.table)
 
         for i, key in enumerate(self.table._model._column_keys):
-            try:
-                headerIndex = self.table._model._column_keys.index(key)
-                headerText = self.table._model._headers[headerIndex]
-            except (ValueError, IndexError):
-                headerText = key
-
+            headerText = self.table._model._header_map.get(key, key)
             action = menu.addAction(headerText)
             action.setCheckable(True)
             action.setChecked(key in self.table._model._visible_columns)
