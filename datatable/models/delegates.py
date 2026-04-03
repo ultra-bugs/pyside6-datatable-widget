@@ -11,10 +11,10 @@
 #                      * -  Copyright © 2026 (Z) Programing  - *
 #                      *    -  -  All Rights Reserved  -  -    *
 #                      * * * * * * * * * * * * * * * * * * * * *
-from typing import Any, Optional
+from typing import Any
 
-from PySide6.QtCore import QModelIndex, Qt, QDateTime, QSize, QRectF, QByteArray, QPoint
-from PySide6.QtGui import QColor, QLinearGradient, QPainter, QBrush, QPen, QPixmap, QPainterPath, QPalette
+from PySide6.QtCore import QModelIndex, Qt, QDateTime, QSize, QRectF, QByteArray, QPoint, QRect
+from PySide6.QtGui import QColor, QFont, QFontMetrics, QLinearGradient, QPainter, QPalette
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import QStyledItemDelegate, QWidget, QStyleOptionViewItem, QDoubleSpinBox, QDateEdit, QCheckBox, QLineEdit, QTextEdit, QProgressBar, QStyle, QApplication
 
@@ -424,3 +424,132 @@ class IconBooleanDelegate(BooleanDelegate):
         self.renderer.render(painter, target_rect)
 
         painter.restore()
+
+# ── Action Buttons Delegate ────────────────────────────────────────────────────
+
+class ActionButtonsDelegate(CellDelegate):
+    """Delegate that renders a row of compact action buttons inside a table cell.
+
+    Each button definition is a dict with:
+        key (str)            : unique action identifier emitted on click
+        label (str)          : button text
+        color (str)          : hex fill color (e.g. '#22c55e')
+        visibleWhen          : optional Callable(rowData: dict) -> bool
+
+    Parent DataTable must expose ``rowActionClicked = Signal(str, str, dict)``
+    which is emitted as ``(column_key, button_key, row_data)``.
+    """
+
+    BTN_HEIGHT = 20
+    BTN_H_PAD = 6   # horizontal padding inside button
+    BTN_V_PAD = 2
+    BTN_GAP = 4     # gap between buttons
+    BTN_RADIUS = 4
+
+    def __init__(self, columnKey: str, buttonDefs: list, parent=None):
+        super().__init__(parent)
+        self._columnKey = columnKey
+        self._buttonDefs = buttonDefs  # list of dicts
+
+    # ── Helpers ──
+
+    def _visibleButtons(self, rowData: dict) -> list:
+        """Return button defs that should be shown for this row."""
+        result = []
+        for btn in self._buttonDefs:
+            visibleWhen = btn.get('visibleWhen')
+            if visibleWhen is None or visibleWhen(rowData):
+                result.append(btn)
+        return result
+
+    def _buttonRects(self, cellRect, rowData: dict) -> list:
+        """Compute QRect for each visible button in this cell."""
+        buttons = self._visibleButtons(rowData)
+        if not buttons:
+            return []
+
+        fm = QFontMetrics(QFont())
+        btnH = min(self.BTN_HEIGHT, cellRect.height() - self.BTN_V_PAD * 2)
+        y = cellRect.y() + (cellRect.height() - btnH) // 2
+        x = cellRect.x() + self.BTN_GAP
+
+        rects = []
+        for btn in buttons:
+            textW = fm.horizontalAdvance(btn['label'])
+            btnW = textW + self.BTN_H_PAD * 2
+            rects.append((btn, QRect(x, y, btnW, btnH)))
+            x += btnW + self.BTN_GAP
+        return rects
+
+    # ── Paint ──
+
+    def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
+        model = index.model()
+        while hasattr(model, 'sourceModel'):
+            fromModel = model.mapToSource(index) if hasattr(model, 'mapToSource') else index
+            model = model.sourceModel() if hasattr(model, 'sourceModel') else model
+            index = fromModel
+
+        rowData = model._data[index.row()] if hasattr(model, '_data') else {}
+
+        painter.save()
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Draw selection background
+        opt = QStyleOptionViewItem(option)
+        self.initStyleOption(opt, index)
+        opt.text = ''
+        QApplication.style().drawControl(QStyle.CE_ItemViewItem, opt, painter)
+
+        buttonRects = self._buttonRects(option.rect, rowData)
+        font = painter.font()
+        font.setPixelSize(11)
+        painter.setFont(font)
+
+        for btn, rect in buttonRects:
+            color = QColor(btn.get('color', '#6b7280'))
+            # Draw rounded rect button background
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(color)
+            painter.drawRoundedRect(rect, self.BTN_RADIUS, self.BTN_RADIUS)
+            # Draw label
+            painter.setPen(QColor('#ffffff'))
+            painter.drawText(rect, Qt.AlignCenter, btn['label'])
+
+        painter.restore()
+
+    def displayText(self, value: Any, locale: Any) -> str:
+        return ''
+
+    def sizeHint(self, option: QStyleOptionViewItem, index: QModelIndex) -> QSize:
+        buttons = self._buttonDefs
+        fm = QFontMetrics(QFont())
+        total = self.BTN_GAP
+        for btn in buttons:
+            total += fm.horizontalAdvance(btn['label']) + self.BTN_H_PAD * 2 + self.BTN_GAP
+        return QSize(max(total, 80), self.BTN_HEIGHT + self.BTN_V_PAD * 2)
+
+    def editorEvent(self, event, model, option, index) -> bool:
+        from PySide6.QtCore import QEvent
+        if event.type() != QEvent.MouseButtonRelease:
+            return False
+
+        # Walk to source model + index
+        srcModel = model
+        srcIdx = index
+        while hasattr(srcModel, 'sourceModel'):
+            srcIdx = srcModel.mapToSource(srcIdx) if hasattr(srcModel, 'mapToSource') else srcIdx
+            srcModel = srcModel.sourceModel()
+
+        rowData = srcModel._data[srcIdx.row()] if hasattr(srcModel, '_data') else {}
+        buttonRects = self._buttonRects(option.rect, rowData)
+
+        clickPos = event.pos()
+        for btn, rect in buttonRects:
+            if rect.contains(clickPos):
+                # Emit via parent DataTable
+                parent = self.parent()
+                if parent and hasattr(parent, 'rowActionClicked'):
+                    parent.rowActionClicked.emit(self._columnKey, btn['key'], rowData)
+                return True
+        return False

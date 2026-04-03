@@ -12,7 +12,8 @@
 #                      *    -  -  All Rights Reserved  -  -    *
 #                      * * * * * * * * * * * * * * * * * * * * *
 from .datatable_model import DataTableModel, DataType, SortOrder
-from .delegates import CellDelegate, NumericDelegate, DateDelegate, BooleanDelegate, ProgressBarDelegate, IconBooleanDelegate, LineDelegate, TextDelegate, ProgressDelegate
+from .delegates import CellDelegate, NumericDelegate, DateDelegate, BooleanDelegate, ProgressBarDelegate, IconBooleanDelegate, LineDelegate, TextDelegate, ProgressDelegate, \
+    ActionButtonsDelegate
 
 __all__ = [
     'DataTableModel',
@@ -24,6 +25,7 @@ __all__ = [
     'BooleanDelegate',
     'ProgressBarDelegate',
     'IconBooleanDelegate',
+    'ActionButtonsDelegate',
     'LineDelegate',
     'TextDelegate',
     'ProgressDelegate',
