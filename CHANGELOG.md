@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.2] - 2026-04-03
+
+- Merge pull request #14 from ultra-bugs/dev (74033c5)
+- Merge branch 'main' into dev (ca1effa)
+- Add `ActionButtonsDelegate`, enhance column visibility logic, update readme with new features, and increment version to 1.2.2. (4649801)
+- chore: bump version to 1.2.1 [GitHub Actions] (884a6ab)
+
 ## [1.2.1] - 2026-03-25
 
 - Avoid runtime error when c++ model class deleted (dcddd5d)

@@ -17,7 +17,7 @@ from .widgets.utils import DataTableView
 from .models.datatable_model import DataTableModel, DataType, SortOrder
 from .models.delegates import CellDelegate, NumericDelegate, DateDelegate, BooleanDelegate, IconBooleanDelegate, ProgressBarDelegate, LineDelegate, ActionButtonsDelegate
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 __author__ = 'Zuko'
 __email__ = 'tansautn@gmail.com'
 __all__ = ['DataTable', 'DataTableModel', 'DataType', 'SortOrder', 'DataTableView', 'CellDelegate', 'NumericDelegate', 'DateDelegate', 'BooleanDelegate', 'IconBooleanDelegate', 'ProgressBarDelegate', 'LineDelegate',
