@@ -34,7 +34,14 @@ class WidgetManager:
         self.controller = controller
         self.widget_class_name = controller.__class__.__name__
         self._config_values: Dict = {}
-
+    @staticmethod
+    def _attrOrCall(attr):
+        if callable(attr):
+            try:
+                return attr()
+            except TypeError:
+                pass
+        return attr
     def get(self, widget_name: str) -> Union[QObject, QWidget]:
         """Get a widget by name
         Supports nested widget names using dot notation (e.g. 'parent.child')
@@ -57,15 +64,9 @@ class WidgetManager:
 
             if key != keys[-1]:
                 resolved.append(key)
-                current_parent = attr
+                current_parent = self._attrOrCall(attr)
                 continue
-            if callable(attr):
-                try:
-                    return attr()
-                except TypeError:
-                    return attr
-
-            return attr
+            return self._attrOrCall(attr)
 
     def set(self, name: str, value, save_to_config: bool = False) -> None:
         """Set a widget attribute value

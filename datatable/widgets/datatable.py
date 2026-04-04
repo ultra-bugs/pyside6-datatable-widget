@@ -103,8 +103,10 @@ class DataTable(Ui_DataTable, BaseController):
     def _connectModelSignals(self):
         self._model.modelReset.connect(self._onModelReset)
         self._model.rowExpandedCollapsed.connect(self._onRowExpandedCollapsed)
+        self.tableView.selectionModel().selectionChanged.connect(lambda *args: self._emitSltChanged(*args))
         return self
-
+    def _emitSltChanged(self, *args):
+        self.selectionChanged.emit(*args)
     def _uiBehaviorSetup(self):
         # Setup UI elements right after initializing self._model
         self._setupHeaderContextMenu()
@@ -113,7 +115,7 @@ class DataTable(Ui_DataTable, BaseController):
         self.tableView.setSortingEnabled(True)
         self.tableView.setSelectionBehavior(QTableView.SelectRows)
         self.tableView.setSelectionMode(QTableView.ExtendedSelection)  # Enable multi-selection
-        self.tableView.verticalHeader().setVisible(False)
+        # self.tableView.verticalHeader().setVisible(False)
         self.tableView.horizontalHeader().setSectionsMovable(True)
         self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Interactive)
         self.tableView.horizontalHeader().setContextMenuPolicy(Qt.CustomContextMenu)

@@ -139,9 +139,12 @@ class DataTableModel(QAbstractTableModel):
 
     def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole) -> Any:
         """Return header data for the given section and orientation"""
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            if 0 <= section < len(self._headers):
-                return self._headers[section]
+        if role == Qt.DisplayRole:
+            if orientation == Qt.Horizontal:
+                if 0 <= section < len(self._headers):
+                    return self._headers[section]
+            elif orientation == Qt.Vertical:
+                return section + 1  # 1-indexed row numbers
         return None
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlags:

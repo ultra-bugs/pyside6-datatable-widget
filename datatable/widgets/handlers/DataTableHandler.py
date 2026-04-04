@@ -153,9 +153,10 @@ class DataTableHandler(Subscriber):
         from ... import DataTable
         self.table: DataTable = widgetManager.controller
 
-    def on_selection_changed(self, selected: QItemSelectionModel, deselected: QItemSelectionModel):
+    def on_selection_changed(self, *args):
         '''Handle selection changes.'''
-        self.table.selectionChanged.emit(selected, deselected)
+        print('t')
+        self.table.selectionChanged.emit(*args)
 
     def on_search_text_changed(self, text: str, data: Dict[str, Any] = None):
         '''Handle search text changed → delegate to Facade.'''
