@@ -392,6 +392,9 @@ class IconBooleanDelegate(BooleanDelegate):
     def set_no_color(self, color: QColor):
         self.no_color = color
 
+    def displayText(self, value: Any, locale: Any) -> str:
+        return ''
+
     def paint(self, painter: QPainter, option: QStyleOptionViewItem, index: QModelIndex) -> None:
         value = index.data(Qt.EditRole)
 

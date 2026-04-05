@@ -609,21 +609,21 @@ class DataTable(Ui_DataTable, BaseController):
             data_type = self._model._column_types.get(col_key)
             config = self._column_configurations.get(col_key, {})
 
-            if data_type == DataType.NUMERIC:
+            if DataType.NUMERIC.same(data_type):
                 delegate = NumericDelegate(self.tableView)
                 if self._show_integers_without_decimals:
                     pass
                 self.tableView.setItemDelegateForColumn(i, delegate)
-            elif data_type == DataType.DATE:
+            elif DataType.DATE.same(data_type):
                 delegate = DateDelegate(self.tableView)
                 self.tableView.setItemDelegateForColumn(i, delegate)
-            elif data_type == DataType.BOOLEAN:
+            elif DataType.BOOLEAN.same(data_type):
                 delegate = BooleanDelegate(self.tableView)
                 self.tableView.setItemDelegateForColumn(i, delegate)
-            elif data_type == DataType.PROGRESS:
+            elif DataType.PROGRESS.same(data_type):
                 delegate = ProgressDelegate(self.tableView)
                 self.tableView.setItemDelegateForColumn(i, delegate)
-            elif data_type == DataType.PROGRESS_BAR:
+            elif DataType.PROGRESS_BAR.same(data_type):
                 delegate = ProgressBarDelegate(self.tableView)
                 if 'base_color' in config:
                     delegate.set_base_color(config['base_color'])
@@ -633,14 +633,14 @@ class DataTable(Ui_DataTable, BaseController):
                     for r in config['ranges']:
                         delegate.add_range(*r)
                 self.tableView.setItemDelegateForColumn(i, delegate)
-            elif data_type == DataType.ICON_BOOLEAN:
+            elif DataType.ICON_BOOLEAN.same(data_type):
                 delegate = IconBooleanDelegate(self.tableView)
                 if 'yes_color' in config:
                     delegate.set_yes_color(QColor(config['yes_color']))
                 if 'no_color' in config:
                     delegate.set_no_color(QColor(config['no_color']))
                 self.tableView.setItemDelegateForColumn(i, delegate)
-            elif data_type == DataType.ACTION_BUTTONS:
+            elif DataType.ACTION_BUTTONS.same(data_type):
                 buttonDefs = self._column_configurations.get(col_key, {}).get('button_defs', [])
                 delegate = ActionButtonsDelegate(col_key, buttonDefs, self)
                 delegate.setParent(self)  # ensure parent is DataTable for signal emission

@@ -30,7 +30,12 @@ class DataType(Enum):
     PROGRESS_BAR = auto()  # New type for ProgressBarDelegate
     ICON_BOOLEAN = auto()  # New type for IconBooleanDelegate
     ACTION_BUTTONS = auto()  # Inline action buttons per row
-
+    
+    def same(self, value: 'DataType') -> bool:
+        # Is instance trick
+        if not (str(value.__module__).find(str(value.__module__)) != -1 and str(self.__class__).__eq__(str(value.__class__))):
+            raise TypeError("value must be a DataType")
+        return self.value == value.value
 
 class SortOrder(Enum):
     """Enum representing sort order"""
