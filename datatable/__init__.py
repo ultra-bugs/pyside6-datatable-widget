@@ -11,7 +11,6 @@
 #                      * -  Copyright © 2026 (Z) Programing  - *
 #                      *    -  -  All Rights Reserved  -  -    *
 #                      * * * * * * * * * * * * * * * * * * * * *
-
 from .widgets.datatable import DataTable
 from .widgets.utils import DataTableView
 from .models.datatable_model import DataTableModel, DataType, SortOrder

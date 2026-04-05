@@ -11,7 +11,6 @@
 #                  * -  Copyright © 2026 (Z) Programing  - *
 #                  *    -  -  All Rights Reserved  -  -    *
 #                  * * * * * * * * * * * * * * * * * * * * *
-
 # This package uses loguru's global logger directly.
 # Handler configuration is the host application's responsibility (see core.Logging).
 from loguru import logger
